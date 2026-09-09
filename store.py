@@ -61,7 +61,7 @@ def redact(value):
         return {k:("[REDACTED]" if any(word in k.lower() for word in ("authorization","api_key","access_token","password","reasoning_content","chain_of_thought","private_reasoning")) else redact(v)) for k,v in value.items()}
     if isinstance(value,list):return [redact(x) for x in value]
     if isinstance(value,str):
-        for key in ("LLM_API_KEY","SHOPIFY_STOREFRONT_TOKEN"):
+        for key in ("LLM_API_KEY","SEARCH_API_KEY","SHOPIFY_STOREFRONT_TOKEN"):
             secret=os.getenv(key)
             if secret:value=value.replace(secret,"[REDACTED]")
         return re.sub(r"sk-[A-Za-z0-9_-]{16,}", "[REDACTED]", value)

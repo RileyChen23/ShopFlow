@@ -2,7 +2,7 @@
 import copy
 from decimal import Decimal
 import core
-VERSION="badcase-contract-v1"
+VERSION="external-search-contract-v1"
 def money_view(value,currency="CNY"):
     if isinstance(value,list):return [money_view(x,currency) for x in value]
     if not isinstance(value,dict):return value
@@ -23,14 +23,19 @@ def result(ctx,name,value,args):
     value=copy.deepcopy(value)
     currency=ctx.t.get("currency","CNY")
     if name=="search_products" and isinstance(value,list):
-        all_scope=core.search(ctx.t["scope"])
-        pool=[s for s in all_scope if s["offer"]["currency"]==currency]
         category=args.get("category","")
-        category_pool=[s for s in pool if not category or s["product"]["category"]==category]
-        value={"items":value,"scope":ctx.t["scope"],"currency":currency,"count_unit":"offers","catalog_version":core.catalog()["version"],
-            "scope_total":len(all_scope),"total":len(pool),"category_total":len(category_pool),"matched":len(value),"returned":len(value),"truncated":False,
-            "filters":{"category":category,"query":args.get("query","")},"matching":"whitespace-separated terms, all must match; not semantic search",
-            "interpretation":"matched describes this filter only, not all catalog coverage. Empty match is not a service failure.",
+        if ctx.t["scope"]=="real":
+            history=(ctx.t.get("search_history") or [{}])[-1]
+            totals=(None,None,None);version="external:"+str(history.get("provider","unknown"));matching="external provider ranked results"
+        else:
+            all_scope=core.search("demo");pool=[s for s in all_scope if s["offer"]["currency"]==currency]
+            category_pool=[s for s in pool if not category or s["product"]["category"]==category]
+            totals=(len(all_scope),len(pool),len(category_pool));version=core.catalog()["version"];matching="fixture text match"
+        value={"items":value,"scope":ctx.t["scope"],"source":"external_search" if ctx.t["scope"]=="real" else "demo_fixture",
+            "currency":currency,"count_unit":"offers","catalog_version":version,
+            "scope_total":totals[0],"total":totals[1],"category_total":totals[2],"matched":len(value),"returned":len(value),"truncated":False,
+            "filters":{"category":category,"query":args.get("query","")},"matching":matching,
+            "interpretation":"returned describes only this query. Empty results do not prove that no suitable product exists.",
             "evidence_required_before_plan":True}
     if name=="get_task":return task_view(ctx.t)
     if name=="update_constraints" and isinstance(value,dict) and not value.get("error"):

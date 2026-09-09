@@ -76,8 +76,8 @@ class DomainTests(unittest.TestCase):
     def test_price_change_invalidates(self):
         t=task();core.set_plan(t,[line()]);t["confirmation"]={"fingerprint":core.fingerprint(t)}
         original=core.snapshot
-        def changed(oid):
-            s=original(oid);s["offer"]["price_minor"]+=100;return s
+        def changed(oid,task=None):
+            s=original(oid,task);s["offer"]["price_minor"]+=100;return s
         with patch.object(core,"snapshot",side_effect=changed),self.assertRaises(core.AppError):checkout.verify(t)
     def test_external_injection_is_data(self):
         original=core.CATALOG

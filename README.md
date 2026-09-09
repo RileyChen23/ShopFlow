@@ -1,6 +1,6 @@
 # ShopFlow
 
-ShopFlow 是一个面向宿舍、居家学习与办公场景的 AI 采购助手。用户可以直接描述目标、预算和已有物品，ShopFlow 会检索可追溯的商品资料，比较规格与价格，并把建议整理成一份可继续修改的采购方案。
+ShopFlow 是一个面向宿舍、居家学习与办公场景的 AI 采购助手。用户可以直接描述目标、预算和已有物品，ShopFlow 会实时搜索商品资料，比较规格与价格，并把建议整理成一份可继续修改的采购方案。
 
 项目将对话、方案与任务状态连接在一起：模型根据当前需求选择工具，读取真实工具结果后继续决策；预算、数量、兼容性和购买确认由服务端校验。用户可以在对话中降低预算、删除条目或补充限制，页面上的方案会同步更新。
 
@@ -22,7 +22,7 @@ ShopFlow 包含三个主要页面：
 - **运行记录**：查看一次任务中的模型请求、工具调用、耗时和状态变化
 - **评测与迭代**：查看系统测试、规则回归、真实模型案例和 bad case 复盘
 
-商品资料分为真实资料与演练资料。真实模式默认检索经过整理的公开商品资料；演练模式使用独立测试目录，适合验证预算、状态和结算流程。
+商品资料分为实时搜索与演练资料。正式模式由模型生成查询词，通过外部 Search Provider 获取结果；演练模式使用独立测试目录，适合验证预算、状态和结算流程。
 
 ## 快速开始
 
@@ -34,10 +34,11 @@ cd ShopFlow
 Copy-Item .env.example .env
 ```
 
-在 `.env` 中填写 DeepSeek API 密钥：
+在 `.env` 中填写 DeepSeek 和 Tavily API 密钥：
 
 ```dotenv
 LLM_API_KEY=your_api_key
+SEARCH_API_KEY=your_tavily_api_key
 ```
 
 初始化本机调用额度并启动服务：
@@ -59,7 +60,7 @@ python server.py
 4. 工具结果返回模型，模型据此继续决策或回复用户。
 5. 经过校验的结果写入当前任务，页面同步展示最新方案。
 
-可用工具覆盖商品搜索、商品依据读取、任务状态读取、预算与约束修改、方案更新及兼容性检查。购买确认独立于模型工具调用，由用户在界面中完成。
+可用工具覆盖实时商品搜索、商品依据读取、任务状态读取、预算与约束修改、方案更新及兼容性检查。搜索结果会转换为既有的 `product / variant / offer / evidence` 结构，并保存在当前任务的临时缓存中；后续 `read_evidence` 和 `set_plan` 直接使用这些临时报价 ID。购买确认独立于模型工具调用，由用户在界面中完成。
 
 主要配置项：
 
@@ -72,14 +73,17 @@ python server.py
 | `LLM_BUDGET_ID` | 本机持久调用额度标识 | `local-validation` |
 | `LLM_MAX_CALLS` | 单轮模型请求上限 | `8` |
 | `LLM_MAX_TOOLS` | 单轮工具调用上限 | `20` |
+| `SEARCH_PROVIDER` | 正式模式的商品搜索实现 | `tavily` |
+| `SEARCH_API_KEY` | Tavily 服务端 API 密钥 | 无 |
+| `SEARCH_MAX_RESULTS` | 每次返回结果上限 | `5` |
 
 完整配置见 [.env.example](.env.example)，模型接入说明见 [docs/model-setup.md](docs/model-setup.md)。
 
 ## 商品资料
 
-当前资料库覆盖显示器、键盘、台灯、耳机、扩展坞和笔记本支架等学习办公品类。每条资料分别记录型号、规格、来源、采集日期、图片来源与报价信息；未知价格、库存或配送状态保持为未知。
+正式模式使用可插拔 Search Provider，当前实现为 [Tavily Search API](https://docs.tavily.com/documentation/api-reference/endpoint/search)。模型根据需求生成查询词，Provider 返回标题、来源 URL 和摘要，服务端统一补充采集时间并形成任务级商品证据。通用搜索结果没有可信结构化售价时，价格保持为 `null`。
 
-真实资料与测试样品使用独立标识和检索范围。商品来源与覆盖情况见 [docs/product-sources.md](docs/product-sources.md)。
+`data/catalog.json` 用于 demo、测试夹具和历史评测复现，不再是正式模式的主要商品来源。项目不抓取淘宝或京东商品页面；Tavily 请求也显式排除这些域名。
 
 ## 测试与评测
 
@@ -102,13 +106,25 @@ python evaluate.py --mode offline
 python evaluate_live.py --prompt shopflow --ids L01 --max-calls 5
 ```
 
+比较旧本地检索和外部实时检索：
+
+```powershell
+# 固定 Provider 响应，适合持续回归，不调用外部 API
+python evaluate_search.py --fixture eval/search-provider-fixture.json --output reports/search-eval-fixture.json
+
+# 使用 .env 中配置的 Tavily，产生真实搜索请求
+python evaluate_search.py --output reports/search-eval-live.json
+```
+
+检索报告统计 Top-5 有效结果覆盖率、结构化字段完整率、已知价格率、Agent 任务链路成功率和硬约束满足率，并逐案例输出 before/after 与差值。固定响应报告明确标记为 `fixture`；实时结果标记为 `external-live`。这里的 Agent 任务成功率验证 `search_products → read_evidence → set_plan`，不调用 LLM。
+
 真实模型评测会使用 `.env` 中配置的 API 和本机调用额度。固定案例位于 [eval/live-cases.json](eval/live-cases.json)，运行报告保存在 `reports/`，并可在应用的“评测与迭代”页面查看。
 
 项目保留了真实运行中发现的问题及修复证据，便于按需求理解、工具调用、数据、状态和回复生成等环节定位问题。详见 [Bad case 复盘](docs/badcases.md) 和 [真实模型评测记录](docs/live-evaluation.md)。
 
 ## 当前范围
 
-ShopFlow 目前提供本地采购规划、结算演练和已核实的外部商品链接。商品发现基于项目内的可追溯资料库，尚未接入实时全网比价、Shopify 订单回传或在线支付。
+ShopFlow 目前提供实时商品发现、本地采购规划、结算演练和外部商品链接。搜索摘要用于形成候选和证据入口，不等同于商家实时库存或完整报价；Shopify 订单回传和在线支付尚未接入。
 
 ## 项目文档
 

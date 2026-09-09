@@ -95,7 +95,10 @@ def catalog():
     if CATALOG is None: CATALOG=load_catalog()
     return CATALOG
 
-def snapshot(offer_id):
+def snapshot(offer_id, task=None):
+    if task:
+        cached=(task.get("search_cache") or {}).get(offer_id)
+        if cached:return copy.deepcopy(cached)
     c=catalog()
     o=next((x for x in c["offers"] if x["id"]==offer_id),None)
     if not o: raise AppError("报价不存在",404,"检索")
@@ -124,7 +127,20 @@ def fresh_task(owner,scope="demo",pref=None):
     return {"id":uuid.uuid4().hex,"owner":owner,"revision":0,"title":"新的采购任务","scope":scope,
             "budget_minor":None,"recipient":"self","owned":list((pref or {}).get("owned",[])),
             "excluded":[],"constraints":[],"items":[],"messages":[],"confirmation":None,
+            "search_cache":{},"search_history":[],
             "status":"规划中","created":now()}
+
+def cache_search(t,snapshots,query,provider,request_id=None,credits=None):
+    cache=t.setdefault("search_cache",{})
+    for row in snapshots:cache[row["offer"]["id"]]=copy.deepcopy(row)
+    # Keep selected plan evidence and the newest external results, bounded per task.
+    keep={i["offer_id"] for i in t.get("items",[])}
+    for oid in list(cache)[:-30]:
+        if oid not in keep:cache.pop(oid,None)
+    t.setdefault("search_history",[]).append({"query":query,"provider":provider,"request_id":request_id,
+        "credits":credits,"result_count":len(snapshots),"collected_at":now()})
+    t["search_history"]=t["search_history"][-10:]
+    return snapshots
 
 def totals(t):
     subtotal=0; unknown=[]; shipping={}; currency=None
@@ -165,9 +181,9 @@ def make_items(t, lines):
     for row in lines:
         oid=row["offer_id"]
         if oid in seen: raise AppError("重复报价，请修改数量")
-        seen.add(oid); s=snapshot(oid); p=s["product"]; o=s["offer"]
+        seen.add(oid); s=snapshot(oid,t); p=s["product"]; o=s["offer"]
         if (t["scope"]=="demo")!=(p["kind"]=="fixture"): raise AppError("不能混入其他数据模式的商品")
-        if t["scope"]=="real" and p["kind"]!="verified": raise AppError("真实模式不包含测试商品")
+        if t["scope"]=="real" and p["kind"] not in ("verified","external"): raise AppError("真实模式不包含测试商品")
         if o["currency"]!=t.get("currency","CNY"): raise AppError("报价币种与任务不同，不能混算",category="计算")
         if o["stock"]=="out": raise AppError("此报价已知缺货",category="推荐约束")
         if p["category"] in t["owned"]+t["excluded"]: raise AppError("与已有或排除物品重复",category="推荐约束")
@@ -203,5 +219,8 @@ def fingerprint(t):
 
 def public_task(t):
     out=copy.deepcopy(t); out.pop("owner",None)
+    cache=out.pop("search_cache",{})
+    out["cached_offers"]=[{"offer_id":oid,"name":s["product"]["name"],"category":s["product"]["category"],
+        "source_url":s["offer"]["url"],"collected_at":s["offer"]["captured_at"]} for oid,s in cache.items()]
     out["totals"]=totals(t); out["compatibility"]=compatibility(t)
     return out

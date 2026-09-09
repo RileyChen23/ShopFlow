@@ -1,0 +1,11 @@
+{
+  "version": "search-eval-v1",
+  "cases": [
+    {"id":"S01","query":"无线静音键盘 USB 接收器 中国 价格","category":"键盘","budget_minor":30000,"owned":[],"excluded":[]},
+    {"id":"S02","query":"23.8英寸 1080p 显示器 HDMI 中国 价格","category":"显示器","budget_minor":80000,"owned":[],"excluded":[]},
+    {"id":"S03","query":"学习桌 台灯 可调色温 无频闪 中国 价格","category":"台灯","budget_minor":30000,"owned":[],"excluded":[]},
+    {"id":"S04","query":"笔记本支架 可调高度 铝合金 中国 价格","category":"支架","budget_minor":25000,"owned":[],"excluded":[]},
+    {"id":"S05","query":"USB-C 扩展坞 HDMI PD USB-A 中国 价格","category":"扩展坞","budget_minor":50000,"owned":[],"excluded":[]},
+    {"id":"S06","query":"蓝牙鼠标 静音 多设备 中国 价格","category":"鼠标","budget_minor":25000,"owned":["键盘"],"excluded":[]}
+  ]
+}

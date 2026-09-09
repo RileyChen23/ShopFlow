@@ -25,14 +25,18 @@ class BadcaseContracts(unittest.TestCase):
     self.assertIsNone(view["offer"]["amounts"]["shipping_minor"]["major_units"])
     self.assertEqual(view["amounts"]["zero_minor"]["major_units"],"0.00");self.assertEqual(source,original)
  def test_search_scope_counts_do_not_equal_subset(self):
-    ctx=agent.Context(t("real"));args={"category":"键盘","query":"键盘 无线 USB"}
+    class Searcher:
+      def search(self,q,n):return {"provider":"test","request_id":"r","credits":0,"results":[{"title":"K1","url":"https://example.com/k1","content":"wireless USB keyboard"}]}
+    ctx=agent.Context(t("real"),searcher=Searcher());args={"category":"键盘","query":"键盘 无线 USB"}
     raw=ctx.execute("search_products",args);wire=tool_contracts.result(ctx,"search_products",raw,args)
-    self.assertEqual((wire["scope_total"],wire["total"],wire["category_total"],wire["matched"]),(24,23,5,2))
-    self.assertEqual(wire["count_unit"],"offers");self.assertEqual(len(wire["items"]),2)
+    self.assertEqual((wire["scope_total"],wire["total"],wire["category_total"]),(None,None,None))
+    self.assertEqual(wire["source"],"external_search");self.assertEqual(wire["matched"],1)
  def test_empty_search_is_not_failure(self):
-    ctx=agent.Context(t("real"));args={"category":"键盘","query":"unfindable-xyz"}
+    class Empty:
+      def search(self,q,n):return {"provider":"test","request_id":"r","credits":0,"results":[]}
+    ctx=agent.Context(t("real"),searcher=Empty());args={"category":"键盘","query":"unfindable-xyz"}
     wire=tool_contracts.result(ctx,"search_products",ctx.execute("search_products",args),args)
-    self.assertEqual(wire["matched"],0);self.assertGreater(wire["category_total"],0)
+    self.assertEqual(wire["matched"],0);self.assertIsNone(wire["category_total"])
     with self.assertRaises(core.AppError):agent.Context(t(),fault="search").execute("search_products",args)
  def test_scope_authorization_never_authorizes_purchase(self):
     for scope,allowed in [("demo",True),("real",False)]:

@@ -2,11 +2,11 @@
 import copy, http.cookies, json, mimetypes, os, re, secrets, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
-import core, store, agent, checkout, maintenance, provider, provenance
+import core, store, agent, checkout, maintenance, provider, provenance, search_provider
 from core import ROOT, AppError, now
 
 class Handler(BaseHTTPRequestHandler):
-    server_version="Caimai/0.1"
+    server_version="ShopFlow/0.2"
     def log_message(self,*args):pass  # Avoid URLs/secrets appearing in access logs.
     def json_response(self,value,status=200):
         self.respond(json.dumps(value,ensure_ascii=False).encode(),status,"application/json; charset=utf-8")
@@ -37,9 +37,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self.json_response({"csrf":self.session["csrf"],"tasks":[core.public_task(t) for t in tasks],
                     "preferences":store.preferences(self.owner),"mode":os.getenv("AGENT_MODE","offline"),
                     "test_lab":os.getenv("ENABLE_TEST_LAB")=="1",
-                    "integrations":{"model_configured":provider.configured(),"shopify_configured":bool(os.getenv("SHOPIFY_STORE") and os.getenv("SHOPIFY_STOREFRONT_TOKEN") and os.getenv("SHOPIFY_TEST_STORE_ACK")=="1")},
-                    "catalog_version":core.catalog()["version"],"catalog_counts":{"verified":sum(p["kind"]=="verified" for p in core.catalog()["products"]),"fixtures":sum(p["kind"]=="fixture" for p in core.catalog()["products"])}})
-            if p=="/api/catalog":return self.json_response({"demo":core.search("demo"),"real":core.search("real")})
+                    "integrations":{"model_configured":provider.configured(),"search_configured":search_provider.configured(),"search_provider":os.getenv("SEARCH_PROVIDER","tavily"),"shopify_configured":bool(os.getenv("SHOPIFY_STORE") and os.getenv("SHOPIFY_STOREFRONT_TOKEN") and os.getenv("SHOPIFY_TEST_STORE_ACK")=="1")},
+                    "catalog_version":core.catalog()["version"],"catalog_counts":{"verified":None,"fixtures":sum(p["kind"]=="fixture" for p in core.catalog()["products"])}})
+            if p=="/api/catalog":return self.json_response({"demo":core.search("demo"),"real":[],"external":True,"provider":os.getenv("SEARCH_PROVIDER","tavily")})
             if p=="/api/runs":return self.json_response(store.runs(self.owner))
             if p=="/api/maintenance":return self.json_response(maintenance.bundle())
             if p.startswith("/api/run/"):
@@ -145,7 +145,7 @@ class Handler(BaseHTTPRequestHandler):
             if core.totals(t)["over_budget"]:raise AppError("方案超预算")
             if b.get("acknowledge_unknown") is not True:raise AppError("需要明确知悉未知费用与测试性质")
             for i in t["items"]:
-                if i["snapshot"]!=core.snapshot(i["offer_id"]):raise AppError("报价已变化，请先刷新报价",409)
+                if i["snapshot"]!=core.snapshot(i["offer_id"],t):raise AppError("报价已变化，请先刷新报价",409)
             t["revision"]=expected+1
             t["confirmation"]={"fingerprint":core.fingerprint(t),"at":now(),"acknowledge_unknown":True}
             t["status"]="已确认，尚未购买"

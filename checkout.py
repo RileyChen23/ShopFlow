@@ -9,7 +9,7 @@ def verify(t):
     if not t["items"]:raise AppError("方案为空",400,"结算")
     if core.totals(t)["over_budget"]:raise AppError("方案超预算",400,"结算")
     for i in t["items"]:
-        if core.snapshot(i["offer_id"])!=i["snapshot"]:
+        if core.snapshot(i["offer_id"],t)!=i["snapshot"]:
             raise AppError("商品资料或价格已变化，请刷新报价并重新确认",409,"结算")
         until=i["snapshot"]["offer"].get("valid_until")
         if until and until<now():raise AppError("报价已过期，请先更新报价",409,"结算")
