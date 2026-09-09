@@ -106,6 +106,18 @@ python evaluate.py --mode offline
 python evaluate_live.py --prompt shopflow --ids L01 --max-calls 5
 ```
 
+运行可续跑的 40 例端到端 Agent benchmark：
+
+```powershell
+# 先用三个代表案例检查模型、Trace、评分和 usage
+python evaluate_agent.py --ids N01,D01,E03 --max-calls 20 --output reports/agent-eval-v1.json
+
+# 将剩余案例追加到同一份报告
+python evaluate_agent.py --resume --max-calls 220 --output reports/agent-eval-v1.json
+```
+
+案例定义在 [eval/agent-benchmark.json](eval/agent-benchmark.json)。评测器保存每个案例的输入、回复、任务状态、工具 Trace、确定性判分和供应商 usage；运行前需在本机配置模型密钥并通过 `budget.py` 设置明确的调用上限。当前 V1 的完整结果与口径见 [Agent V1 正式评测](docs/agent-evaluation-v1.md)。
+
 比较旧本地检索和外部实时检索：
 
 ```powershell
@@ -133,4 +145,5 @@ ShopFlow 目前提供实时商品发现、本地采购规划、结算演练和�
 - [商品来源](docs/product-sources.md)
 - [模型配置](docs/model-setup.md)
 - [评测说明](docs/evaluation.md)
+- [Agent V1 正式评测](docs/agent-evaluation-v1.md)
 - [Bad case 复盘](docs/badcases.md)

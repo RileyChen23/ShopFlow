@@ -1,5 +1,7 @@
 # 真实模型评测与迭代
 
+> 2026-09-10 已完成 40 例正式 V1 baseline：任务成功 21/40、硬约束条目满足 70/88、动态修改成功 1/8。完整配置、逐层归因、费用和复现方式见 [Agent V1 正式评测](agent-evaluation-v1.md)，原始逐案例记录见 [agent-eval-v1-baseline-final.json](../reports/agent-eval-v1-baseline-final.json)。下文继续保留此前 8 例开发批次，不能与正式 baseline 混算。
+
 > 2026-09-09 日志复核：下文保留上一轮批次与观察，不新增真实成绩。L02 第 4 次请求已暂存方案，第 5 次再次检查，没有最终回复机会；不足以证明无限循环。L03 明确拒绝把测试商品排入演练方案，不能将现象直接归因为“清楚需求被普通追问策略拦住”，也无法从单次输出确定是哪条新增 Prompt 导致。完整证据、分层修复与待复测项见 [badcases.md](badcases.md)。本轮模型请求为 0。
 
 模型为 DeepSeek deepseek-v4-flash，非思考、非流式 Chat Completions function tools。报告含实际响应模型、usage、时间、请求与工具事件。固定资料来自 reports/snapshots/catalog-2026-09-07.json；不是实时商品搜索。

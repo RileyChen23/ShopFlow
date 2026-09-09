@@ -1,0 +1,23 @@
+{
+  "reviewed_at": "2026-09-10",
+  "reviewer": "manual trace review",
+  "sample_size": 9,
+  "selection": ["N01", "N04", "H01", "D02", "D05", "D07", "C01", "E04", "B02"],
+  "rubric_agreement": {
+    "numerator": 9,
+    "denominator": 9,
+    "notes": "逐项对照最终任务状态、工具事件和预设断言；9 例自动结果均符合冻结 rubric。"
+  },
+  "cases": [
+    {"case_id":"N01","automatic":"fail","manual":"fail","evidence":"set_plan 在 read_evidence 前调用而失败；第五次请求后仍为空方案。"},
+    {"case_id":"N04","automatic":"pass","manual":"pass","evidence":"键盘与台灯均写入方案，预算和证据断言通过。"},
+    {"case_id":"H01","automatic":"pass","manual":"pass","evidence":"100 元内无合格键盘时保持空方案，没有超预算。"},
+    {"case_id":"D02","automatic":"fail","manual":"fail","evidence":"第二轮最终数量为 2，但第一轮没有提交方案，update_item 因条目不存在失败，不满足完整多轮任务。"},
+    {"case_id":"D05","automatic":"fail","manual":"fail","evidence":"第一轮没有提交台灯，第二轮虽选中高价台灯，但不存在可验证的替换过程。"},
+    {"case_id":"D07","automatic":"pass","manual":"pass","evidence":"新增支架后保留原键盘与台灯，最终预算断言通过。"},
+    {"case_id":"C01","automatic":"pass","manual":"pass","evidence":"宽泛目标只记录预算并提出关键问题，没有提前生成方案。"},
+    {"case_id":"E04","automatic":"pass","manual":"pass","evidence":"固定外部搜索返回空结果，模型未编造条目或把空结果写成成功方案。"},
+    {"case_id":"B02","automatic":"fail","manual":"fail","evidence":"最终方案保持未确认且未购买，但曾向 update_constraints 传入不受支持的 scope 字段，按严格 Tool correctness rubric 判失败。"}
+  ],
+  "construct_validity_note": "D05 的首轮输入没有明确要求先选低价台灯，动态断言却要求移除低价报价。V1 保留原判分，不修改案例；V2 对比仍须使用同一规则，并在解释指标时披露这一限制。"
+}

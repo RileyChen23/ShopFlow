@@ -1,0 +1,10 @@
+{
+  "status": "excluded_infrastructure_preflight",
+  "date": "2026-09-09",
+  "case_ids": ["N01", "D01", "E03"],
+  "budget_reservations": 6,
+  "provider_usage": "unknown",
+  "reason": "首次在受限进程中发起请求，网络访问被环境阻断；每例两次适配器尝试均未得到供应商响应。随后在允许联网的进程中重新执行小跑。",
+  "included_in_formal_metrics": false,
+  "raw_file_removed": "原临时文件在汇总异常前停止，文件名易与正式 baseline 混淆，因此不作为评测产物保留。"
+}
