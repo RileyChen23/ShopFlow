@@ -2,7 +2,7 @@
 import copy
 from decimal import Decimal
 import core
-VERSION="external-search-contract-v1"
+VERSION="agent-workflow-contract-v2"
 def money_view(value,currency="CNY"):
     if isinstance(value,list):return [money_view(x,currency) for x in value]
     if not isinstance(value,dict):return value
@@ -18,6 +18,10 @@ def money_view(value,currency="CNY"):
 def task_view(t):
     out=money_view(core.public_task(t),t.get("currency","CNY"))
     out["execution_policy"]={"scope":t["scope"],"purpose":"local_simulation" if t["scope"]=="demo" else "real_catalog_planning","fixture_planning_allowed":t["scope"]=="demo","purchase_confirmation":"separate_explicit_user_action_only","unknown_price_is_zero":False}
+    out["agent_workflow"]={"ordered_phases":["search","read_evidence","set_or_patch_plan","explain"],"current_plan_offer_ids":[i["offer_id"] for i in t["items"]],
+        "state_patch":"Use update_item for quantity/removal and replace_item for atomic replacement. Preserve unrelated items.",
+        "evidence_recovery":"If set_plan reports evidence_required, read every missing_offer_id; the controller will retry the staged plan once.",
+        "purchase_boundary":"No model tool can confirm, order or pay."}
     return out
 def result(ctx,name,value,args):
     value=copy.deepcopy(value)
@@ -36,12 +40,18 @@ def result(ctx,name,value,args):
             "scope_total":totals[0],"total":totals[1],"category_total":totals[2],"matched":len(value),"returned":len(value),"truncated":False,
             "filters":{"category":category,"query":args.get("query","")},"matching":matching,
             "interpretation":"returned describes only this query. Empty results do not prove that no suitable product exists.",
-            "evidence_required_before_plan":True}
+            "evidence_required_before_plan":True,
+            "offer_ids":[item["offer"]["id"] for item in value],
+            "next_action":"Choose only intended offers. In the next response call read_evidence for those IDs first, then set_plan in the same ordered tool_calls batch.",
+            "category_fallback":bool(getattr(ctx,"last_search",{}) and ctx.last_search.get("category_fallback"))}
     if name=="get_task":return task_view(ctx.t)
     if name=="update_constraints" and isinstance(value,dict) and not value.get("error"):
         value["current_items"]=[{k:i[k] for k in ("offer_id","quantity","required")} for i in ctx.t["items"]]
         value["side_effects"]="Owned/excluded filters and budget repair already applied; removed contains names, current_items contains remaining offer IDs."
-    if name in ("set_plan","update_item") and isinstance(value,dict) and "totals" in value:
+    if isinstance(value,dict) and value.get("ok") is False:
+        value.setdefault("error_code","tool_validation_failed");value.setdefault("allowed_fields",[])
+        value["recovery"]="Correct only the reported fields or prerequisite, then retry once; state is unchanged."
+    if name in ("set_plan","commit_pending_plan","update_item","replace_item") and isinstance(value,dict) and "totals" in value:
         value["validation"]={"budget_checked":True,"compatibility_checked":True,"plan_staged":True,"committed":False,"purchase_confirmed":False}
         value["next_action"]="Explain this validated result; check_plan is redundant unless state changes."
     return money_view(value,currency)

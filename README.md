@@ -146,4 +146,5 @@ ShopFlow 目前提供实时商品发现、本地采购规划、结算演练和�
 - [模型配置](docs/model-setup.md)
 - [评测说明](docs/evaluation.md)
 - [Agent V1 正式评测](docs/agent-evaluation-v1.md)
+- [Agent V2 机制修改](docs/agent-v2-changes.md)
 - [Bad case 复盘](docs/badcases.md)

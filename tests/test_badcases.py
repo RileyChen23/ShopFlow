@@ -53,11 +53,77 @@ class BadcaseContracts(unittest.TestCase):
     self.assertEqual(task["items"][0]["offer_id"],"test-kbd1-o")
  def test_evidence_prerequisite_is_not_relaxed(self):
     task=t();ctx=agent.Context(task)
-    with self.assertRaises(core.AppError):ctx.execute("set_plan",{"items":[line()]})
-    self.assertEqual(task["items"],[])
+    staged=ctx.execute("set_plan",{"items":[line()]})
+    self.assertEqual(task["items"],[]);self.assertEqual(staged["status"],"awaiting_evidence")
     ctx.execute("read_evidence",{"offer_id":"test-kbd1-o"})
-    raw=ctx.execute("set_plan",{"items":[line()]});view=tool_contracts.result(ctx,"set_plan",raw,{})
+    raw=ctx.recover_pending_plan();view=tool_contracts.result(ctx,"commit_pending_plan",raw,{})
     self.assertTrue(view["validation"]["budget_checked"]);self.assertFalse(view["validation"]["committed"]);self.assertFalse(view["validation"]["purchase_confirmed"])
+ def test_evidence_failure_stages_and_recovers_same_plan_once(self):
+    task=t();ctx=agent.Context(task)
+    staged=ctx.execute("set_plan",{"items":[line()]})
+    self.assertEqual(staged["missing_offer_ids"],["test-kbd1-o"]);self.assertTrue(staged["pending_plan_staged"])
+    ctx.execute("read_evidence",{"offer_id":"test-kbd1-o"});result=ctx.recover_pending_plan()
+    self.assertEqual(task["items"][0]["offer_id"],"test-kbd1-o");self.assertTrue(result["totals"])
+    self.assertTrue(ctx.events[-1]["controller_recovery"]);self.assertIsNone(ctx.recover_pending_plan())
+ def test_search_phase_closes_redundant_search_and_reports_fallback(self):
+    ctx=agent.Context(t(),target_categories=["键盘"])
+    args={"category":"键盘","query":"不存在于夹具的复杂形容词"};raw=ctx.execute("search_products",args);wire=tool_contracts.result(ctx,"search_products",raw,args)
+    self.assertTrue(wire["items"]);self.assertTrue(wire["category_fallback"])
+    names={x["function"]["name"] for x in agent.workflow_tools(ctx)}
+    self.assertNotIn("search_products",names);self.assertIn("read_evidence",names);self.assertIn("set_plan",names)
+    two=agent.Context(t(),target_categories=["键盘","台灯"]);two.execute("search_products",{"category":"键盘","query":"键盘"})
+    search=next(x for x in agent.workflow_tools(two) if x["function"]["name"]=="search_products")
+    self.assertEqual(search["function"]["parameters"]["properties"]["category"]["enum"],["台灯"])
+ def test_existing_plan_routes_to_state_patch_tools(self):
+    task=t();core.set_plan(task,[line(),line("test-lamp1-o")])
+    kinds={"键盘数量改成2把":"quantity","换成蓝牙键盘":"replacement","台灯先不买，预算降到200元":"prune"}
+    for text,kind in kinds.items():
+      ctx=agent.Context(copy.deepcopy(task),target_categories=agent.categories(text),mutation_kind=agent.mutation_kind(text,task));names={x["function"]["name"] for x in agent.workflow_tools(ctx)}
+      self.assertEqual(ctx.mutation_kind,kind)
+      if kind in ("quantity","prune"):self.assertNotIn("search_products",names)
+      if kind=="replacement":self.assertNotIn("update_item",names);self.assertIn("replace_item",names)
+ def test_atomic_replace_preserves_unrelated_items(self):
+    task=t();core.set_plan(task,[line(),line("test-lamp1-o")]);ctx=agent.Context(task)
+    ctx.execute("read_evidence",{"offer_id":"test-kbd2-o"})
+    ctx.execute("replace_item",{"old_offer_id":"test-kbd1-o","new_item":line("test-kbd2-o")})
+    self.assertEqual([i["offer_id"] for i in task["items"]],["test-kbd2-o","test-lamp1-o"])
+ def test_atomic_replace_failure_keeps_old_plan(self):
+    task=t();task["budget_minor"]=16000;core.set_plan(task,[line()]);ctx=agent.Context(task)
+    ctx.execute("read_evidence",{"offer_id":"test-mon1-o"})
+    with self.assertRaises(core.AppError):ctx.execute("replace_item",{"old_offer_id":"test-kbd1-o","new_item":line("test-mon1-o")})
+    self.assertEqual([i["offer_id"] for i in task["items"]],["test-kbd1-o"])
+ def test_read_only_scope_schema_error_is_machine_readable(self):
+    ctx=agent.Context(t())
+    with self.assertRaises(core.AppError) as raised:ctx.execute("update_constraints",{"scope":"demo"})
+    self.assertNotIn("scope",raised.exception.details["allowed_fields"]);self.assertIn("budget_minor",raised.exception.details["allowed_fields"])
+ def test_validated_plan_survives_final_response_failure(self):
+    calls=[{"id":"search","type":"function","function":{"name":"search_products","arguments":json.dumps({"category":"键盘","query":"键盘"})}}]
+    planned=[
+      {"id":"read","type":"function","function":{"name":"read_evidence","arguments":json.dumps({"offer_id":"test-kbd1-o"})}},
+      {"id":"plan","type":"function","function":{"name":"set_plan","arguments":json.dumps({"items":[line()]})}}
+    ]
+    first={"choices":[{"message":{"role":"assistant","content":None,"tool_calls":calls},"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2,"prompt_cache_hit_tokens":0,"prompt_cache_miss_tokens":1}}
+    second={"choices":[{"message":{"role":"assistant","content":None,"tool_calls":planned},"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2,"prompt_cache_hit_tokens":0,"prompt_cache_miss_tokens":1}}
+    failure=core.AppError("final response unavailable",502,"依赖故障");failure.retryable=False
+    with patch.dict(os.environ,{"LLM_MAX_CALLS":"3","LLM_MAX_RETRIES":"0","LLM_PROMPT_VERSION":"shopflow-v2"}),patch.object(agent,"post_json",side_effect=[first,second,failure]):
+      task,trace=agent.run(t(),"预算300元买键盘",{},mode="live")
+    self.assertEqual(task["items"][0]["offer_id"],"test-kbd1-o");self.assertEqual(trace["fallback"]["type"],"validated_state_summary")
+    self.assertEqual(trace["status"],"partial");self.assertIn("服务端校验",task["messages"][-1]["content"])
+ def test_live_controller_recovers_plan_called_before_evidence(self):
+    search_call={"id":"search","type":"function","function":{"name":"search_products","arguments":json.dumps({"category":"键盘","query":"键盘"})}}
+    reversed_calls=[
+      {"id":"plan","type":"function","function":{"name":"set_plan","arguments":json.dumps({"items":[line()]})}},
+      {"id":"read","type":"function","function":{"name":"read_evidence","arguments":json.dumps({"offer_id":"test-kbd1-o"})}}
+    ]
+    replies=[
+      {"choices":[{"message":{"role":"assistant","content":None,"tool_calls":[search_call]},"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2,"prompt_cache_hit_tokens":0,"prompt_cache_miss_tokens":1}},
+      {"choices":[{"message":{"role":"assistant","content":None,"tool_calls":reversed_calls},"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2,"prompt_cache_hit_tokens":0,"prompt_cache_miss_tokens":1}},
+      response(answer="方案已形成，等待用户确认。")]
+    with patch.dict(os.environ,{"LLM_MAX_CALLS":"3","LLM_MAX_RETRIES":"0","LLM_PROMPT_VERSION":"shopflow-v2"}),patch.object(agent,"post_json",side_effect=replies):
+      task,trace=agent.run(t(),"预算300元买键盘",{},mode="live")
+    self.assertEqual(task["items"][0]["offer_id"],"test-kbd1-o")
+    self.assertEqual([e["tool"] for e in trace["events"]],["search_products","set_plan","read_evidence","commit_pending_plan"])
+    self.assertTrue(all(e["status"]=="success" for e in trace["events"]));self.assertTrue(trace["events"][-1]["controller_recovery"])
  def test_l02_final_slot_contains_results_and_no_tools(self):
     seen=[]
     replies=[response("search_products",{"category":"键盘","query":""}),response("read_evidence",{"offer_id":"test-kbd1-o"}),response("update_constraints",{"budget_minor":100000}),response("set_plan",{"items":[line()]}),response(answer="已生成演练键盘方案，未知运费。")]

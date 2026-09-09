@@ -47,7 +47,10 @@ class DomainTests(unittest.TestCase):
         self.assertTrue(any("USB-C" in w and "尚未核实" in w for w in core.compatibility(t)))
     def test_evidence_before_recommend(self):
         c=agent.Context(task())
-        with self.assertRaises(core.AppError):c.execute("set_plan",{"items":[line()]})
+        staged=c.execute("set_plan",{"items":[line()]})
+        self.assertEqual(staged["status"],"awaiting_evidence");self.assertEqual(c.t["items"],[])
+        c.execute("read_evidence",{"offer_id":"test-kbd1-o"});c.recover_pending_plan()
+        self.assertEqual(c.t["items"][0]["offer_id"],"test-kbd1-o")
     def test_schema_extra_fields(self):
         with self.assertRaises(core.AppError):core.validate({"category":"键盘","query":"","url":"https://evil.example"},agent.SCHEMAS["search_products"])
     def test_transaction_tool_unavailable(self):

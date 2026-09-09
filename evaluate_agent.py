@@ -170,7 +170,7 @@ def finalize_report(report,by_id):
     return report
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument("--benchmark",default="eval/agent-benchmark.json");parser.add_argument("--prompt",default="shopflow");parser.add_argument("--ids");parser.add_argument("--max-calls",type=int,default=240);parser.add_argument("--output");parser.add_argument("--resume",action="store_true");parser.add_argument("--finalize-only",action="store_true");parser.add_argument("--manual-review");parser.add_argument("--dry-run",action="store_true");args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument("--benchmark",default="eval/agent-benchmark.json");parser.add_argument("--prompt",default="shopflow");parser.add_argument("--label",default="eval-baseline-v1");parser.add_argument("--git-tag");parser.add_argument("--ids");parser.add_argument("--max-calls",type=int,default=240);parser.add_argument("--output");parser.add_argument("--resume",action="store_true");parser.add_argument("--finalize-only",action="store_true");parser.add_argument("--manual-review");parser.add_argument("--dry-run",action="store_true");args=parser.parse_args()
     data=json.loads(Path(args.benchmark).read_text(encoding="utf-8"));by_id={c["case_id"]:c for c in data["cases"]}
     path=Path(args.output) if args.output else core.ROOT/"reports"/("agent-eval-"+str(time.time_ns())+".json")
     previous=json.loads(path.read_text(encoding="utf-8")) if args.resume and path.is_file() else None
@@ -195,12 +195,12 @@ def main():
     if budget_remaining()<largest_case:raise SystemExit(f"Persistent budget cannot reserve the largest case ({largest_case}); no requests sent")
     os.environ["LLM_PROMPT_VERSION"]=args.prompt;os.environ["LLM_MAX_CALLS"]="5";store.init();start_used=budget_used()
     remaining=lambda:min(max(0,args.max_calls-(budget_used()-start_used)),budget_remaining())
-    report=previous or {"id":"agent-eval-"+str(time.time_ns()),"version":"agent-eval-v1","evaluation_label":"eval-baseline-v1","started_at":core.now(),"status":"running","commit":provenance.commit(),"git_tag":"eval-baseline-v1","comparison_baseline":None,
+    report=previous or {"id":"agent-eval-"+str(time.time_ns()),"version":"agent-eval-v1","evaluation_label":args.label,"started_at":core.now(),"status":"running","commit":provenance.commit(),"git_tag":args.git_tag,"comparison_baseline":None,
         "comparison_baseline_reason":"当前提交被固定为 V1 baseline，供后续 V2 使用同一 benchmark 比较；仓库不存在可信的更早优化前 Agent 版本。",
         "benchmark":data["version"],"benchmark_sha256":provenance.sha(Path(args.benchmark)),"scoring":data["scoring"],"model":os.getenv("LLM_MODEL"),"provider":os.getenv("LLM_PROVIDER"),
         "prompt":args.prompt,"prompt_sha256":provenance.sha(core.ROOT/"prompts"/(args.prompt+".txt")),"temperature":"provider default","per_turn_max_calls":5,
         "search_execution":"fixed external-search response for real-scope cases; demo catalog for deterministic price cases","rows":[],"runs":[],"invalid_attempts":[],"manual_review":None}
-    expected={"benchmark_sha256":provenance.sha(Path(args.benchmark)),"commit":provenance.commit(),"model":os.getenv("LLM_MODEL"),"provider":os.getenv("LLM_PROVIDER"),"prompt":args.prompt,"prompt_sha256":provenance.sha(core.ROOT/"prompts"/(args.prompt+".txt"))}
+    expected={"benchmark_sha256":provenance.sha(Path(args.benchmark)),"commit":provenance.commit(),"model":os.getenv("LLM_MODEL"),"provider":os.getenv("LLM_PROVIDER"),"prompt":args.prompt,"prompt_sha256":provenance.sha(core.ROOT/"prompts"/(args.prompt+".txt")),"evaluation_label":args.label}
     mismatches={k:(report.get(k),v) for k,v in expected.items() if report.get(k)!=v}
     if mismatches:raise SystemExit("Resume configuration mismatch: "+json.dumps(mismatches,ensure_ascii=False))
     run={"started_at":core.now(),"case_ids":ids,"maximum_model_requests":reservation,"budget_used_before":start_used}
