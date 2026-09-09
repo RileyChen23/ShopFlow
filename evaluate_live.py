@@ -43,7 +43,7 @@ def evaluate_case(case,prompt,remaining):
     return {"id":case["id"],"name":case["name"],"split":case["split"],"mode":"live","version":prompt,"input":case["messages"],"passed":all(checks.values()),"assertions":checks,"error":error,"result":core.public_task(task),"traces":traces,"fault_fixture":case.get("fault"),"manual_scores":None,"latency_ms":sum(t.get("latency_ms",0) for t in traces)}
 def main():
     p=argparse.ArgumentParser();p.add_argument("--prompt",default="live-baseline");p.add_argument("--ids");p.add_argument("--max-calls",type=int,default=28);args=p.parse_args()
-    if args.prompt not in ("live-baseline","live-improved","live-bc-review"):raise SystemExit("Unsupported prompt")
+    if args.prompt not in ("live-baseline","live-improved","live-bc-review","shopflow"):raise SystemExit("Unsupported prompt")
     if not 1<=args.max_calls<=40:raise SystemExit("Batch cap must be 1..40")
     os.environ["LLM_PROMPT_VERSION"]=args.prompt
     dataset=json.loads((core.ROOT/"eval/live-cases.json").read_text(encoding="utf-8"))
