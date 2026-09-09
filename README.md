@@ -116,7 +116,7 @@ python evaluate_agent.py --ids N01,D01,E03 --max-calls 20 --output reports/agent
 python evaluate_agent.py --resume --max-calls 220 --output reports/agent-eval-v1.json
 ```
 
-案例定义在 [eval/agent-benchmark.json](eval/agent-benchmark.json)。评测器保存每个案例的输入、回复、任务状态、工具 Trace、确定性判分和供应商 usage；运行前需在本机配置模型密钥并通过 `budget.py` 设置明确的调用上限。当前 V1 的完整结果与口径见 [Agent V1 正式评测](docs/agent-evaluation-v1.md)。
+案例定义在 [eval/agent-benchmark.json](eval/agent-benchmark.json)。评测器保存每个案例的输入、回复、任务状态、工具 Trace、确定性判分和供应商 usage；运行前需在本机配置模型密钥并通过 `budget.py` 设置明确的调用上限。V1 与 V2 使用同一套 40 个案例和评分口径，完整对比见 [Agent V2 正式评测](docs/agent-evaluation-v2.md)。
 
 比较旧本地检索和外部实时检索：
 
@@ -147,4 +147,5 @@ ShopFlow 目前提供实时商品发现、本地采购规划、结算演练和�
 - [评测说明](docs/evaluation.md)
 - [Agent V1 正式评测](docs/agent-evaluation-v1.md)
 - [Agent V2 机制修改](docs/agent-v2-changes.md)
+- [Agent V2 正式评测](docs/agent-evaluation-v2.md)
 - [Bad case 复盘](docs/badcases.md)

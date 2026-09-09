@@ -1,0 +1,2057 @@
+{
+  "id": "agent-eval-1788972882839627600",
+  "version": "agent-eval-v1",
+  "evaluation_label": "eval-v2-smoke",
+  "started_at": "2026-09-09T16:54:42.839650+00:00",
+  "status": "partial",
+  "commit": "2df83b83e13b5447048bfb933ff09f8f75ba6a08",
+  "git_tag": "eval-v2-candidate",
+  "comparison_baseline": null,
+  "comparison_baseline_reason": "当前提交被固定为 V1 baseline，供后续 V2 使用同一 benchmark 比较；仓库不存在可信的更早优化前 Agent 版本。",
+  "benchmark": "agent-benchmark-v1",
+  "benchmark_sha256": "f9ab83eafd79cc42305fa8d48764eacb83fcef18ade27c80bd4a22c501380a97",
+  "scoring": "deterministic-state-and-trace-v1",
+  "model": "deepseek-v4-flash",
+  "provider": "deepseek",
+  "prompt": "shopflow-v2",
+  "prompt_sha256": "6f15f0603ce5e1cc663ee81beae16d606f59a6ff5ccc803cb0f8ceebe2b1fa75",
+  "temperature": "provider default",
+  "per_turn_max_calls": 5,
+  "search_execution": "fixed external-search response for real-scope cases; demo catalog for deterministic price cases",
+  "rows": [
+    {
+      "case_id": "N01",
+      "scenario": "正常组合采购",
+      "status": "ran",
+      "messages": [
+        "预算300元，买一把USB-A键盘。"
+      ],
+      "expected_behavior": "直接检索并形成单品方案",
+      "task": {
+        "id": "a7cad073d8cc49f4876d5f4f498e27dc",
+        "owner": "agent-benchmark",
+        "revision": 0,
+        "title": "新的采购任务",
+        "scope": "demo",
+        "budget_minor": null,
+        "recipient": "self",
+        "owned": [],
+        "excluded": [],
+        "constraints": [],
+        "items": [],
+        "messages": [
+          {
+            "role": "user",
+            "content": "预算300元，买一把USB-A键盘。"
+          }
+        ],
+        "confirmation": null,
+        "search_cache": {},
+        "search_history": [],
+        "status": "规划中",
+        "created": "2026-09-09T16:54:42.950485+00:00",
+        "currency": "CNY"
+      },
+      "states": [],
+      "answers": [],
+      "traces": [
+        {
+          "id": "d7d42837624c486ca4646589bafa2466",
+          "started_at": "2026-09-09T16:54:42.950634+00:00",
+          "retries": [],
+          "fallback": null,
+          "model_events": [],
+          "provider": "deepseek",
+          "endpoint_host": "api.deepseek.com",
+          "api_protocol": "chat-completions/function-tools",
+          "thinking": "disabled",
+          "stream": false,
+          "mode": "live",
+          "model": "deepseek-v4-flash",
+          "prompt_version": "shopflow-v2",
+          "strategy": {
+            "version": "v2",
+            "budget_repair": "required_first",
+            "description": "根据开发集 D07：预算下降时先保留必要项，避免可选项占据预算"
+          },
+          "catalog_version": "catalog-2026-09-08-reviewed",
+          "catalog_sha256": "39f8ee111260bda7e2fab29e0e50339eff03e4ed0d105ff44571e0430588219c",
+          "commit": "2df83b83e13b5447048bfb933ff09f8f75ba6a08",
+          "model_calls": 0,
+          "model_ms": 0,
+          "usage_reports": [],
+          "estimated_cost_usd": null,
+          "cost_source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+          "cost_date": "2026-09-08",
+          "input": "预算300元，买一把USB-A键盘。",
+          "context": {
+            "revision": 0,
+            "budget_minor": null,
+            "scope": "demo"
+          },
+          "tool_contract_version": "agent-workflow-contract-v2",
+          "tool_schema_sha256": "230ac43ceacad944cd4dfd2227d94d6cd66d9c03ac01cc6398fa6b5dad0dd7ee",
+          "prompt_sha256": "6f15f0603ce5e1cc663ee81beae16d606f59a6ff5ccc803cb0f8ceebe2b1fa75",
+          "data_snapshot": {
+            "version": "catalog-2026-09-08-reviewed",
+            "products": [
+              {
+                "id": "real-k380s",
+                "kind": "verified",
+                "brand": "Logitech",
+                "name": "Pebble Keys 2 K380s",
+                "category": "键盘",
+                "attributes": {
+                  "connection": "Bluetooth",
+                  "keys": "低键程、安静按键",
+                  "devices": "可切换 3 台设备"
+                },
+                "limitations": [
+                  "英国商店规格与布局；是否配送中国未知。安静是厂商描述，不等同于无声实测。"
+                ],
+                "image": null,
+                "image_source": null,
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes"
+                    ],
+                    "url": "https://www.logitech.com/en-gb/shop/p/pebble-keys-2.920-011821",
+                    "excerpt": "厂商页：Bluetooth；quiet low-profile keys；Easy-Switch 可切换三台设备。",
+                    "checked_at": "2026-09-07T14:10:00+00:00"
+                  }
+                ]
+              },
+              {
+                "id": "real-a24i",
+                "kind": "verified",
+                "brand": "Xiaomi",
+                "name": "Xiaomi Monitor A24i",
+                "category": "显示器",
+                "attributes": {
+                  "resolution": "1920 × 1080",
+                  "size": "23.8 英寸",
+                  "ports": "DP 1.4 ×1 / HDMI ×1"
+                },
+                "limitations": [
+                  "未核实主机视频输出能力。"
+                ],
+                "image": null,
+                "image_source": null,
+                "evidence": [
+                  {
+                    "fields": [
+                      "attributes",
+                      "name"
+                    ],
+                    "url": "https://www.mi.com/global/product/xiaomi-monitor-a24i/specs/",
+                    "excerpt": "规格页：P24FBA-RAGL；23.8 英寸；1920×1080；DP 1.4 和 HDMI 输入。",
+                    "checked_at": "2026-09-07T14:10:00+00:00"
+                  }
+                ]
+              },
+              {
+                "id": "real-mouse2",
+                "kind": "verified",
+                "brand": "Xiaomi",
+                "name": "Xiaomi Dual-mode Wireless Mouse 2",
+                "category": "鼠标",
+                "attributes": {
+                  "connection": "2.4 GHz / Bluetooth",
+                  "resolution": "1200 DPI"
+                },
+                "limitations": [
+                  "macOS 不支持侧键功能；2.4 GHz 接收器需要 USB-A 端口。"
+                ],
+                "image": null,
+                "image_source": null,
+                "evidence": [
+                  {
+                    "fields": [
+                      "attributes",
+                      "limitations"
+                    ],
+                    "url": "https://www.mi.com/global/support/faq/details/KA-497422/",
+                    "excerpt": "FAQ：双模连接、1200 DPI；macOS 不支持侧键。",
+                    "checked_at": "2026-09-07T14:10:00+00:00"
+                  }
+                ]
+              },
+              {
+                "id": "real-light",
+                "kind": "verified",
+                "brand": "Xiaomi",
+                "name": "Mi Computer Monitor Light Bar",
+                "category": "台灯",
+                "attributes": {
+                  "mount": "桌面显示器挂灯",
+                  "dimming": "可调亮度与色温"
+                },
+                "requires_monitor": true,
+                "limitations": [
+                  "显示器厚度上限 32 mm；小于 10 mm 调角度时需手扶；不建议笔记本使用。"
+                ],
+                "image": "https://i01.appmifile.com/webfile/globalimg/products/pc/mi-computer-monitor-light-bar/s07c.jpg",
+                "image_source": "https://www.mi.com/global/product/mi-computer-monitor-light-bar/",
+                "evidence": [
+                  {
+                    "fields": [
+                      "attributes",
+                      "limitations"
+                    ],
+                    "url": "https://www.mi.com/global/product/mi-computer-monitor-light-bar/",
+                    "excerpt": "官方安装说明：桌面显示器厚度不超过 32 mm，不建议用于笔记本。",
+                    "checked_at": "2026-09-07T14:10:00+00:00"
+                  }
+                ]
+              },
+              {
+                "id": "test-kbd1",
+                "kind": "fixture",
+                "brand": "演练样品",
+                "name": "轻声薄膜键盘",
+                "category": "键盘",
+                "attributes": {
+                  "connection": "USB-A",
+                  "quiet": "演练：低噪声"
+                },
+                "limitations": [
+                  "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+                ],
+                "image": null,
+                "image_source": null,
+                "evidence": [
+                  {
+                    "fields": [
+                      "attributes",
+                      "name"
+                    ],
+                    "url": null,
+                    "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+                    "checked_at": "2026-09-07T14:10:00+00:00"
+                  }
+                ]
+              },
+              {
+                "id": "test-kbd2",
+                "kind": "fixture",
+                "brand": "演练样品",
+                "name": "紧凑蓝牙键盘",
+                "category": "键盘",
+                "attributes": {
+                  "connection": "Bluetooth",
+                  "quiet": "演练：低噪声"
+                },
+                "limitations": [
+                  "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+                ],
+                "image": null,
+                "image_source": null,
+                "evidence": [
+                  {
+                    "fields": [
+                      "attributes",
+                      "name"
+                    ],
+                    "url": null,
+                    "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+                    "checked_at": "2026-09-07T14:10:00+00:00"
+                  }
+                ]
+              },
+              {
+                "id": "test-mon1",
+                "kind": "fixture",
+                "brand": "演练样品",
+                "name": "23.8 英寸办公显示器",
+                "category": "显示器",
+                "attributes": {
+                  "ports": "演练：HDMI 输入",
+                  "size": "23.8 英寸"
+                },
+                "limitations": [
+                  "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+                ],
+                "image": null,
+                "image_source": null,
+                "evidence": [
+                  {
+                    "fields": [
+                      "attributes",
+                      "name"
+                    ],
+                    "url": null,
+                    "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+                    "checked_at": "2026-09-07T14:10:00+00:00"
+                  }
+                ]
+              },
+              {
+                "id": "test-mon2",
+                "kind": "fixture",
+                "brand": "演练样品",
+                "name": "27 英寸办公显示器",
+                "category": "显示器",
+                "attributes": {
+                  "ports": "演练：HDMI / DP 输入",
+                  "size": "27 英寸"
+                },
+                "limitations": [
+                  "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+                ],
+                "image": null,
+                "image_source": null,
+                "evidence": [
+                  {
+                    "fields": [
+                      "attributes",
+                      "name"
+                    ],
+                    "url": null,
+                    "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+                    "checked_at": "2026-09-07T14:10:00+00:00"
+                  }
+                ]
+              },
+              {
+                "id": "test-lamp1",
+                "kind": "fixture",
+                "brand": "演练样品",
+                "name": "可调光桌面台灯",
+                "category": "台灯",
+                "attributes": {
+                  "dimming": "演练：三档调光"
+                },
+                "limitations": [
+                  "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+                ],
+                "image": null,
+                "image_source": null,
+                "evidence": [
+                  {
+                    "fields": [
+                      "attributes",
+                      "name"
+                    ],
+                    "url": null,
+                    "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+                    "checked_at": "2026-09-07T14:10:00+00:00"
+                  }
+                ]
+              },
+              {
+                "id": "test-lamp2",
+                "kind": "fixture",
+                "brand": "演练样品",
+                "name": "长臂阅读台灯",
+                "category": "台灯",
+                "attributes": {
+                  "mount": "演练：夹持厚度待核实"
+                },
+                "limitations": [
+                  "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+                ],
+                "image": null,
+                "image_source": null,
+                "evidence": [
+                  {
+                    "fields": [
+                      "attributes",
+                      "name"
+                    ],
+                    "url": null,
+                    "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+                    "checked_at": "2026-09-07T14:10:00+00:00"
+                  }
+                ]
+              },
+              {
+                "id": "test-stand1",
+                "kind": "fixture",
+                "brand": "演练样品",
+                "name": "折叠笔记本支架",
+                "category": "支架",
+                "attributes": {
+                  "load": "演练：5 kg；需确认电脑尺寸"
+                },
+                "limitations": [
+                  "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+                ],
+                "image": null,
+                "image_source": null,
+                "evidence": [
+                  {
+                    "fields": [
+                      "attributes",
+                      "name"
+                    ],
+                    "url": null,
+                    "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+                    "checked_at": "2026-09-07T14:10:00+00:00"
+                  }
+                ]
+              },
+              {
+                "id": "test-stand2",
+                "kind": "fixture",
+                "brand": "演练样品",
+                "name": "桌面增高架",
+                "category": "支架",
+                "attributes": {
+                  "width": "演练：50 cm"
+                },
+                "limitations": [
+                  "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+                ],
+                "image": null,
+                "image_source": null,
+                "evidence": [
+                  {
+                    "fields": [
+                      "attributes",
+                      "name"
+                    ],
+                    "url": null,
+                    "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+                    "checked_at": "2026-09-07T14:10:00+00:00"
+                  }
+                ]
+              },
+              {
+                "id": "test-hub1",
+                "kind": "fixture",
+                "brand": "演练样品",
+                "name": "多口转接器",
+                "category": "扩展坞",
+                "attributes": {
+                  "ports": "演练：USB-A ×2、HDMI ×1；主机需支持视频输出"
+                },
+                "limitations": [
+                  "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+                ],
+                "image": null,
+                "image_source": null,
+                "evidence": [
+                  {
+                    "fields": [
+                      "attributes",
+                      "name"
+                    ],
+                    "url": null,
+                    "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+                    "checked_at": "2026-09-07T14:10:00+00:00"
+                  }
+                ]
+              },
+              {
+                "id": "test-mouse1",
+                "kind": "fixture",
+                "brand": "演练样品",
+                "name": "静音无线鼠标",
+                "category": "鼠标",
+                "attributes": {
+                  "connection": "演练：USB-A 接收器"
+                },
+                "limitations": [
+                  "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+                ],
+                "image": null,
+                "image_source": null,
+                "evidence": [
+                  {
+                    "fields": [
+                      "attributes",
+                      "name"
+                    ],
+                    "url": null,
+                    "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+                    "checked_at": "2026-09-07T14:10:00+00:00"
+                  }
+                ]
+              },
+              {
+                "id": "real-a27i",
+                "kind": "verified",
+                "brand": "Xiaomi",
+                "name": "Xiaomi Monitor A27i",
+                "category": "显示器",
+                "attributes": {
+                  "resolution": "1920×1080",
+                  "refresh": "100Hz",
+                  "ports": "DP ×1 / HDMI 2.0 ×1"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。",
+                  "主机视频输出和供电协议未知，不凭 USB-C 外形保证兼容。"
+                ],
+                "image": "https://i02.appmifile.com/635_operatorx_operatorx_opx/15/09/2023/f91af94584a0c4d388b1ca1333d82b6a.png",
+                "image_source": "https://www.mi.com/global/product/xiaomi-monitor-a27i/specs/",
+                "image_status": "官方页面提取，显示依赖来源服务",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://www.mi.com/global/product/xiaomi-monitor-a27i/specs/",
+                    "excerpt": "核实的厂商规格：27英寸 / P27FBA-RAGL；1920×1080；100Hz；DP ×1 / HDMI 2.0 ×1",
+                    "checked_at": "2026-09-08T15:01:12.545436+00:00",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": "709ab4fbd8f1314a56ea3f827081e6f8519c0b36a351d0293f3d7f2e540b1e85"
+                  }
+                ]
+              },
+              {
+                "id": "real-g27i",
+                "kind": "verified",
+                "brand": "Xiaomi",
+                "name": "Xiaomi Gaming Monitor G27i",
+                "category": "显示器",
+                "attributes": {
+                  "resolution": "1920×1080",
+                  "refresh": "165Hz",
+                  "ports": "DP / HDMI 2.0"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。",
+                  "主机视频输出和供电协议未知，不凭 USB-C 外形保证兼容。"
+                ],
+                "image": "https://i02.appmifile.com/996_operatorx_operatorx_opx/11/10/2023/9dea8e756a357911d5a9921a4f7af6af.png",
+                "image_source": "https://www.mi.com/global/product/xiaomi-gaming-monitor-g27i/specs/",
+                "image_status": "官方页面提取，显示依赖来源服务",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://www.mi.com/global/product/xiaomi-gaming-monitor-g27i/specs/",
+                    "excerpt": "核实的厂商规格：27英寸 / P27FBB-RGGL；1920×1080；165Hz；DP / HDMI 2.0",
+                    "checked_at": "2026-09-08T15:01:12.516348+00:00",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": "c33301dbda31de2bbd89172088dad01fb874df5c861ca3e3c0c68441170f0392"
+                  }
+                ]
+              },
+              {
+                "id": "real-g27qi",
+                "kind": "verified",
+                "brand": "Xiaomi",
+                "name": "Xiaomi 2K Gaming Monitor G27Qi",
+                "category": "显示器",
+                "attributes": {
+                  "resolution": "2560×1440",
+                  "refresh": "180Hz",
+                  "ports": "DP ×2 / HDMI ×2"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。",
+                  "主机视频输出和供电协议未知，不凭 USB-C 外形保证兼容。"
+                ],
+                "image": "https://i02.appmifile.com/638_operatorx_operatorx_opx/12/07/2024/96654c19e139fc193312fce677a60008.png",
+                "image_source": "https://www.mi.com/global/product/xiaomi-2k-gaming-monitor-g27qi/specs/",
+                "image_status": "官方页面提取，显示依赖来源服务",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://www.mi.com/global/product/xiaomi-2k-gaming-monitor-g27qi/specs/",
+                    "excerpt": "核实的厂商规格：27英寸 / P27QCA-RGGL；2560×1440；180Hz；DP ×2 / HDMI ×2",
+                    "checked_at": "2026-09-08T15:01:13.169203+00:00",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": "4c43d852c0edeb8354effef8d30ce84103d1be1e0b4de7afe14ac4b624b8a376"
+                  }
+                ]
+              },
+              {
+                "id": "real-a22i",
+                "kind": "verified",
+                "brand": "Xiaomi",
+                "name": "Xiaomi Monitor A22i",
+                "category": "显示器",
+                "attributes": {
+                  "resolution": "1920×1080",
+                  "refresh": "HDMI 75Hz",
+                  "ports": "HDMI 1.4 / VGA"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。",
+                  "主机视频输出和供电协议未知，不凭 USB-C 外形保证兼容。"
+                ],
+                "image": "https://i02.appmifile.com/171_operatorx_operatorx_opx/18/07/2023/a543dada04a0125398d08b46a0382784.png",
+                "image_source": "https://www.mi.com/global/product/xiaomi-monitor-a22i/specs/",
+                "image_status": "官方页面提取，显示依赖来源服务",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://www.mi.com/global/product/xiaomi-monitor-a22i/specs/",
+                    "excerpt": "核实的厂商规格：21.45英寸 / A22FAB-RAGL；1920×1080；HDMI 75Hz；HDMI 1.4 / VGA",
+                    "checked_at": "2026-09-08T15:01:12.930523+00:00",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": "d56e94ac307d47d68eee97e4c01d5243094cecbf1f1509c500d191f4623744e5"
+                  }
+                ]
+              },
+              {
+                "id": "real-k250",
+                "kind": "verified",
+                "brand": "Logitech",
+                "name": "Logitech K250",
+                "category": "键盘",
+                "attributes": {
+                  "connection": "Bluetooth",
+                  "layout": "紧凑、有数字区",
+                  "keys": "深键程"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。"
+                ],
+                "image": null,
+                "image_source": "https://www.logitech.com/en-us/shop/p/k250",
+                "image_status": "页面有图片，未取得稳定且匹配的图片直链",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://www.logitech.com/en-us/shop/p/k250",
+                    "excerpt": "核实的厂商规格：Graphite / Bluetooth / 美国页面；Bluetooth；紧凑、有数字区；深键程",
+                    "checked_at": "2026-09-08T15:01:24.744453+00:00",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": "1e0007d5cd4ca57dea409ff72b5d5b31df1dacb9b2078f8edc3c0355a4a88ef3"
+                  }
+                ],
+                "reference_quotes": [
+                  {
+                    "currency": "USD",
+                    "price_minor": 2299,
+                    "price_kind": "market",
+                    "observed_on": "2026-09-08",
+                    "source": "https://www.logitech.com/en-us/shop/p/k250",
+                    "conditions": "美国官方页面所示选中型号；税费、配送、当前价格未知；不可加入 CNY 合计"
+                  }
+                ]
+              },
+              {
+                "id": "real-k120",
+                "kind": "verified",
+                "brand": "Logitech",
+                "name": "Logitech K120",
+                "category": "键盘",
+                "attributes": {
+                  "connection": "USB",
+                  "layout": "全尺寸数字区",
+                  "tilt": "可调支脚"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。"
+                ],
+                "image": "https://resource.logitech.com/w_544,h_466,ar_7:6,c_pad,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/products/keyboards/k120/gallery/k120-gallery-01-new.png",
+                "image_source": "https://www.logitech.com/en-us/shop/p/k120-usb-standard-computer",
+                "image_status": "官方页面提取，显示依赖来源服务",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://www.logitech.com/en-us/shop/p/k120-usb-standard-computer",
+                    "excerpt": "核实的厂商规格：USB 有线 / 全尺寸 / 美国页面；USB；全尺寸数字区；可调支脚",
+                    "checked_at": "2026-09-08T15:01:19.436953+00:00",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": "0a9b9c87c6eb0d08beac4f0797b4d671a378e6dbccac69ccd3bd4201eecc1f12"
+                  }
+                ],
+                "reference_quotes": [
+                  {
+                    "currency": "USD",
+                    "price_minor": 1299,
+                    "price_kind": "market",
+                    "observed_on": "2026-09-08",
+                    "source": "https://www.logitech.com/en-us/shop/p/k120-usb-standard-computer",
+                    "conditions": "美国官方页面所示选中型号；税费、配送、当前价格未知；不可加入 CNY 合计"
+                  }
+                ]
+              },
+              {
+                "id": "real-k270",
+                "kind": "verified",
+                "brand": "Logitech",
+                "name": "Logitech K270",
+                "category": "键盘",
+                "attributes": {
+                  "connection": "Unifying USB 接收器",
+                  "layout": "全尺寸"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。"
+                ],
+                "image": "https://resource.logitech.com/w_544,h_466,ar_7:6,c_pad,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/products/keyboards/k270/gallery/k270-gallery-1-new.png",
+                "image_source": "https://www.logitech.com/en-us/shop/p/k270-unifying-wireless",
+                "image_status": "官方页面提取，显示依赖来源服务",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://www.logitech.com/en-us/shop/p/k270-unifying-wireless",
+                    "excerpt": "核实的厂商规格：无线 Unifying / 美国页面；Unifying USB 接收器；全尺寸",
+                    "checked_at": "2026-09-08T15:01:19.823242+00:00",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": "31271dd52e57e2a3aa233f91d474948cd2f8334ad3c6f7ff70ae0a9d3f32092d"
+                  }
+                ]
+              },
+              {
+                "id": "real-k400",
+                "kind": "verified",
+                "brand": "Logitech",
+                "name": "Logitech K400 Plus",
+                "category": "键盘",
+                "attributes": {
+                  "connection": "无线 USB 接收器",
+                  "touchpad": "集成触控板"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。"
+                ],
+                "image": null,
+                "image_source": "https://www.logitech.com/en-us/shop/p/k400-plus-touchpad-keyboard",
+                "image_status": "页面有图片，未取得稳定且匹配的图片直链",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://www.logitech.com/en-us/shop/p/k400-plus-touchpad-keyboard",
+                    "excerpt": "核实的厂商规格：无线 / 集成触控板 / 美国页面；无线 USB 接收器；集成触控板",
+                    "checked_at": "2026-09-08T15:01:30.885095+00:00",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": "3a5e72d5d471e7b82cca468e257742db680c223cea6c76744722b516ce4f97fe"
+                  }
+                ]
+              },
+              {
+                "id": "real-mxmini",
+                "kind": "verified",
+                "brand": "Logitech",
+                "name": "Logitech MX Keys Mini",
+                "category": "键盘",
+                "attributes": {
+                  "connection": "Bluetooth",
+                  "backlight": "背光",
+                  "keys": "低键程"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。"
+                ],
+                "image": null,
+                "image_source": "https://www.logitech.com/en-us/shop/p/mx-keys-mini",
+                "image_status": "页面有图片，未取得稳定且匹配的图片直链",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://www.logitech.com/en-us/shop/p/mx-keys-mini",
+                    "excerpt": "核实的厂商规格：Bluetooth / 紧凑 / 美国页面；Bluetooth；背光；低键程",
+                    "checked_at": "2026-09-08T15:01:28.522006+00:00",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": "8d40f405be50d8bba09ac4678ce611420edda8726619fe8a79d8fe7ed650c663"
+                  }
+                ]
+              },
+              {
+                "id": "real-m240",
+                "kind": "verified",
+                "brand": "Logitech",
+                "name": "Logitech M240 Silent",
+                "category": "鼠标",
+                "attributes": {
+                  "connection": "Bluetooth",
+                  "noise": "厂商描述：quiet 低噪声点击",
+                  "battery": "厂商最长18个月，依使用而异"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。"
+                ],
+                "image": null,
+                "image_source": "https://www.logitech.com/en-us/shop/p/m240-silent-bluetooth-mouse",
+                "image_status": "页面有图片，未取得稳定且匹配的图片直链",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://www.logitech.com/en-us/shop/p/m240-silent-bluetooth-mouse",
+                    "excerpt": "核实的厂商规格：Off-White / Bluetooth / 美国页面；Bluetooth；厂商描述：quiet 低噪声点击；厂商最长18个月，依使用而异",
+                    "checked_at": "2026-09-08T15:01:29.005525+00:00",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": "52507bd22dfa2af78f6f89d30a2951411b12b9d471e9e86565f4df790250fdea"
+                  }
+                ],
+                "reference_quotes": [
+                  {
+                    "currency": "USD",
+                    "price_minor": 2299,
+                    "price_kind": "market",
+                    "observed_on": "2026-09-08",
+                    "source": "https://www.logitech.com/en-us/shop/p/m240-silent-bluetooth-mouse",
+                    "conditions": "美国官方页面所示选中型号；税费、配送、当前价格未知；不可加入 CNY 合计"
+                  }
+                ]
+              },
+              {
+                "id": "real-m350s",
+                "kind": "verified",
+                "brand": "Logitech",
+                "name": "Logitech Pebble Mouse 2 M350s",
+                "category": "鼠标",
+                "attributes": {
+                  "connection": "Bluetooth",
+                  "button": "可自定义中键",
+                  "shape": "便携薄型"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。"
+                ],
+                "image": "https://resource.logitech.com/w_544,h_466,ar_7:6,c_pad,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/products/mice/pebble-mouse-2-m350s/2026-refresh/gallery/pebble-mouse-2-m350s-tonal-rose-top-angle-gallery-1.png",
+                "image_source": "https://www.logitech.com/en-us/shop/p/pebble-2-m350s-wireless-mouse",
+                "image_status": "官方页面提取，显示依赖来源服务",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://www.logitech.com/en-us/shop/p/pebble-2-m350s-wireless-mouse",
+                    "excerpt": "核实的厂商规格：Tonal Rose / Bluetooth / 美国页面；Bluetooth；可自定义中键；便携薄型",
+                    "checked_at": "2026-09-08T15:01:35.747374+00:00",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": "9da78ec082feba7285fbe5889e1bd375968f601b1e73043b834c74a52c0d6601"
+                  }
+                ],
+                "reference_quotes": [
+                  {
+                    "currency": "USD",
+                    "price_minor": 2499,
+                    "price_kind": "market",
+                    "observed_on": "2026-09-08",
+                    "source": "https://www.logitech.com/en-us/shop/p/pebble-2-m350s-wireless-mouse",
+                    "conditions": "美国官方页面所示选中型号；税费、配送、当前价格未知；不可加入 CNY 合计"
+                  }
+                ]
+              },
+              {
+                "id": "real-m185",
+                "kind": "verified",
+                "brand": "Logitech",
+                "name": "Logitech M185",
+                "category": "鼠标",
+                "attributes": {
+                  "connection": "无线",
+                  "shape": "紧凑"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。"
+                ],
+                "image": "https://resource.logitech.com/w_544,h_466,ar_7:6,c_pad,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/products/mice/m185/gallery/2025-update-assets/m185-grey-top-angle-1.png",
+                "image_source": "https://www.logitech.com/en-us/shop/p/m185-wireless-mouse",
+                "image_status": "官方页面提取，显示依赖来源服务",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://www.logitech.com/en-us/shop/p/m185-wireless-mouse",
+                    "excerpt": "核实的厂商规格：紧凑无线 / 美国页面；无线；紧凑",
+                    "checked_at": "2026-09-08T15:01:41.536793+00:00",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": "1f209469c04a24cec59b7db4ff6ee416f642b83a38e0f3fc3454f9f15dbc50b2"
+                  }
+                ]
+              },
+              {
+                "id": "real-mxanywhere3s",
+                "kind": "verified",
+                "brand": "Logitech",
+                "name": "Logitech MX Anywhere 3S",
+                "category": "鼠标",
+                "attributes": {
+                  "connection": "Bluetooth",
+                  "shape": "便携"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。"
+                ],
+                "image": "https://resource.logitech.com/w_544,h_466,ar_7:6,c_pad,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/products/mice/mx-anywhere-3s/product-gallery/black/mx-anywhere-3s-mouse-top-view-black.png",
+                "image_source": "https://www.logitech.com/en-us/shop/p/mx-anywhere-3s",
+                "image_status": "官方页面提取，显示依赖来源服务",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://www.logitech.com/en-us/shop/p/mx-anywhere-3s",
+                    "excerpt": "核实的厂商规格：Bluetooth / 美国页面；Bluetooth；便携",
+                    "checked_at": "2026-09-08",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": null
+                  }
+                ]
+              },
+              {
+                "id": "real-lamp1s",
+                "kind": "verified",
+                "brand": "Xiaomi",
+                "name": "Mi LED Desk Lamp 1S",
+                "category": "台灯",
+                "attributes": {
+                  "temperature": "2600–5000K",
+                  "flux": "520lm",
+                  "cri": "Ra90",
+                  "power": "9W"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。",
+                  "照明参数为厂商规格，未独立测量。"
+                ],
+                "image": "https://i01.appmifile.com/v1/MI_18455B3E4DA706226CF7535A58E875F0267/pms_1666850673.95389721.png",
+                "image_source": "https://www.mi.com/global/product/mi-led-desk-lamp-1s/specs/",
+                "image_status": "官方页面提取，显示依赖来源服务",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://www.mi.com/global/product/mi-led-desk-lamp-1s/specs/",
+                    "excerpt": "核实的厂商规格：白色 / MJTD01SYL；2600–5000K；520lm；Ra90；9W",
+                    "checked_at": "2026-09-08T15:01:31.612419+00:00",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": "35a0520ee3ad10d39baa65a4c259db999811761ee66ec552eea23e0fa538e1da"
+                  }
+                ]
+              },
+              {
+                "id": "real-lamplite",
+                "kind": "verified",
+                "brand": "Xiaomi",
+                "name": "Xiaomi Desk Lamp Lite",
+                "category": "台灯",
+                "attributes": {
+                  "temperature": "3900K ±300K",
+                  "cri": "90",
+                  "power": "7.5W"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。",
+                  "照明参数为厂商规格，未独立测量。"
+                ],
+                "image": "https://i02.appmifile.com/404_operatorx_operatorx_opx/15/07/2024/3cb200b8d0cd8d557845cf0ee8341f8f.png",
+                "image_source": "https://www.mi.com/global/product/xiaomi-desk-lamp-lite/specs/",
+                "image_status": "官方页面提取，显示依赖来源服务",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://www.mi.com/global/product/xiaomi-desk-lamp-lite/specs/",
+                    "excerpt": "核实的厂商规格：白色 / 9290041693/MJTD12YL；3900K ±300K；90；7.5W",
+                    "checked_at": "2026-09-08T15:01:32.250141+00:00",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": "260773ecce5ae5ccd9731fe489f50e1c8ee1cb1527b9bf96cc5f87a56ece650e"
+                  }
+                ]
+              },
+              {
+                "id": "real-lamppro",
+                "kind": "verified",
+                "brand": "Xiaomi",
+                "name": "Mi Smart LED Desk Lamp Pro",
+                "category": "台灯",
+                "attributes": {
+                  "temperature": "2500–4800K",
+                  "flux": "700lm（3900K最大亮度条件）",
+                  "cri": "Ra90",
+                  "power": "12.5W"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。",
+                  "照明参数为厂商规格，未独立测量。"
+                ],
+                "image": "https://i01.appmifile.com/webfile/globalimg/pic/Mi-Smart-LED-Desk-Lamp-Pro.png",
+                "image_source": "https://www.mi.com/es/product/mi-smart-led-desk-lamp-pro/specs/",
+                "image_status": "官方页面提取，显示依赖来源服务",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://www.mi.com/es/product/mi-smart-led-desk-lamp-pro/specs/",
+                    "excerpt": "核实的厂商规格：MJTD02YL / 西班牙地区资料；2500–4800K；700lm（3900K最大亮度条件）；Ra90；12.5W",
+                    "checked_at": "2026-09-08T15:01:33.091050+00:00",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": "d804f8674d9b7e00cbba7a487fd237a6cf8592ad08509a1a25ae11c4b5c97ad5"
+                  }
+                ]
+              },
+              {
+                "id": "real-hub45363",
+                "kind": "verified",
+                "brand": "UGREEN",
+                "name": "UGREEN Revodok 45363",
+                "category": "扩展坞",
+                "attributes": {
+                  "ports": "2 USB-C 数据 / 2 USB-A / HDMI / PD",
+                  "hdmi": "4K60Hz（依主机协议）",
+                  "data": "10Gbps",
+                  "power": "PD100W输入，实际输出待核实"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。",
+                  "主机视频输出和供电协议未知，不凭 USB-C 外形保证兼容。"
+                ],
+                "image": null,
+                "image_source": "https://www.ugreen.com/en-ae/products/ae-45363",
+                "image_status": "页面有图片，未取得稳定且匹配的图片直链",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://www.ugreen.com/en-ae/products/ae-45363",
+                    "excerpt": "核实的厂商规格：6合1 / 阿联酋地区资料；2 USB-C 数据 / 2 USB-A / HDMI / PD；4K60Hz（依主机协议）；10Gbps；PD100W输入，实际输出待核实",
+                    "checked_at": "2026-09-08",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": null
+                  }
+                ]
+              },
+              {
+                "id": "real-hub45365",
+                "kind": "verified",
+                "brand": "UGREEN",
+                "name": "UGREEN Revodok Pro 45365",
+                "category": "扩展坞",
+                "attributes": {
+                  "ports": "双HDMI / 2 USB-A / 2 USB-C数据 / PD",
+                  "data": "10Gbps",
+                  "hdmi": "双4K60Hz，macOS多扩展屏相同内容",
+                  "power": "PD100W输入"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。",
+                  "主机视频输出和供电协议未知，不凭 USB-C 外形保证兼容。"
+                ],
+                "image": null,
+                "image_source": "https://www.ugreen.com/en-ca/products/ca-45365",
+                "image_status": "页面有图片，未取得稳定且匹配的图片直链",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://www.ugreen.com/en-ca/products/ca-45365",
+                    "excerpt": "核实的厂商规格：7合1 / Black / 加拿大地区资料；双HDMI / 2 USB-A / 2 USB-C数据 / PD；10Gbps；双4K60Hz，macOS多扩展屏相同内容；PD100W输入",
+                    "checked_at": "2026-09-08T15:02:20.983747+00:00",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": "8a5f9535e7b3fbadce19c210760c677157690393a4fcf9f520b0406116f9deb5"
+                  }
+                ]
+              },
+              {
+                "id": "real-hub60515",
+                "kind": "verified",
+                "brand": "UGREEN",
+                "name": "UGREEN Revodok 107 60515",
+                "category": "扩展坞",
+                "attributes": {
+                  "ports": "HDMI / RJ45 / 读卡",
+                  "hdmi": "4K60Hz（依主机协议）"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。",
+                  "主机视频输出和供电协议未知，不凭 USB-C 外形保证兼容。"
+                ],
+                "image": null,
+                "image_source": "https://www.ugreen.com/en-gb/products/uk-60515",
+                "image_status": "页面有图片，未取得稳定且匹配的图片直链",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://www.ugreen.com/en-gb/products/uk-60515",
+                    "excerpt": "核实的厂商规格：7合1 / 英国地区资料；HDMI / RJ45 / 读卡；4K60Hz（依主机协议）",
+                    "checked_at": "2026-09-08",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": null
+                  }
+                ]
+              },
+              {
+                "id": "real-standugreen",
+                "kind": "verified",
+                "brand": "UGREEN",
+                "name": "UGREEN Laptop Stand for Desk Adjustable",
+                "category": "支架",
+                "attributes": {
+                  "size": "厂商标称适配8–17.3英寸",
+                  "structure": "折叠便携，附收纳袋"
+                },
+                "limitations": [
+                  "地区版本、键位/插头及中国市场供应需要核对；库存与配送未知。",
+                  "实际重量、底面尺寸和稳定性需核对；英寸范围不保证所有机型适配。"
+                ],
+                "image": "https://eu.ugreen.com/cdn/shop/products/ugreen-laptop-stand-for-de[REDACTED].png?v=1697187385&width=3840",
+                "image_source": "https://eu.ugreen.com/products/ugreen-laptop-stand-for-desk-adjustable",
+                "image_status": "官方页面提取，显示依赖来源服务",
+                "evidence": [
+                  {
+                    "fields": [
+                      "name",
+                      "attributes",
+                      "variant"
+                    ],
+                    "url": "https://eu.ugreen.com/products/ugreen-laptop-stand-for-desk-adjustable",
+                    "excerpt": "核实的厂商规格：折叠铝合金 / 欧洲页面；厂商标称适配8–17.3英寸；折叠便携，附收纳袋",
+                    "checked_at": "2026-09-08",
+                    "collection_method": "官方页面人工阅读；抓取状态见 source-check.json",
+                    "page_sha256": null
+                  }
+                ]
+              }
+            ],
+            "variants": [
+              {
+                "id": "real-k380s-v",
+                "product_id": "real-k380s",
+                "sku": "920-011821",
+                "spec": "玫瑰色 / 英国商店页面 / 布局待核实"
+              },
+              {
+                "id": "real-a24i-v",
+                "product_id": "real-a24i",
+                "sku": "P24FBA-RAGL",
+                "spec": "23.8 英寸 / P24FBA-RAGL"
+              },
+              {
+                "id": "real-mouse2-v",
+                "product_id": "real-mouse2",
+                "sku": "未获取官方 SKU",
+                "spec": "黑色 / 双模"
+              },
+              {
+                "id": "real-light-v",
+                "product_id": "real-light",
+                "sku": "未获取官方 SKU",
+                "spec": "挂灯 / 无线遥控"
+              },
+              {
+                "id": "test-kbd1-v",
+                "product_id": "test-kbd1",
+                "sku": "TEST-KBD1",
+                "spec": "深灰 / USB-A / 87 键"
+              },
+              {
+                "id": "test-kbd2-v",
+                "product_id": "test-kbd2",
+                "sku": "TEST-KBD2",
+                "spec": "米白 / Bluetooth / 78 键"
+              },
+              {
+                "id": "test-mon1-v",
+                "product_id": "test-mon1",
+                "sku": "TEST-MON1",
+                "spec": "黑色 / 1080p / HDMI"
+              },
+              {
+                "id": "test-mon2-v",
+                "product_id": "test-mon2",
+                "sku": "TEST-MON2",
+                "spec": "黑色 / 1440p / HDMI + DP"
+              },
+              {
+                "id": "test-lamp1-v",
+                "product_id": "test-lamp1",
+                "sku": "TEST-LAMP1",
+                "spec": "白色 / 独立底座"
+              },
+              {
+                "id": "test-lamp2-v",
+                "product_id": "test-lamp2",
+                "sku": "TEST-LAMP2",
+                "spec": "米白 / 桌夹式"
+              },
+              {
+                "id": "test-stand1-v",
+                "product_id": "test-stand1",
+                "sku": "TEST-STAND1",
+                "spec": "银色 / 折叠式"
+              },
+              {
+                "id": "test-stand2-v",
+                "product_id": "test-stand2",
+                "sku": "TEST-STAND2",
+                "spec": "浅木色 / 50 cm"
+              },
+              {
+                "id": "test-hub1-v",
+                "product_id": "test-hub1",
+                "sku": "TEST-HUB1",
+                "spec": "灰色 / USB-C 接入"
+              },
+              {
+                "id": "test-mouse1-v",
+                "product_id": "test-mouse1",
+                "sku": "TEST-MOUSE1",
+                "spec": "灰色 / 2.4 GHz"
+              },
+              {
+                "id": "real-a27i-v",
+                "product_id": "real-a27i",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "27英寸 / P27FBA-RAGL"
+              },
+              {
+                "id": "real-g27i-v",
+                "product_id": "real-g27i",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "27英寸 / P27FBB-RGGL"
+              },
+              {
+                "id": "real-g27qi-v",
+                "product_id": "real-g27qi",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "27英寸 / P27QCA-RGGL"
+              },
+              {
+                "id": "real-a22i-v",
+                "product_id": "real-a22i",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "21.45英寸 / A22FAB-RAGL"
+              },
+              {
+                "id": "real-k250-v",
+                "product_id": "real-k250",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "Graphite / Bluetooth / 美国页面"
+              },
+              {
+                "id": "real-k120-v",
+                "product_id": "real-k120",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "USB 有线 / 全尺寸 / 美国页面"
+              },
+              {
+                "id": "real-k270-v",
+                "product_id": "real-k270",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "无线 Unifying / 美国页面"
+              },
+              {
+                "id": "real-k400-v",
+                "product_id": "real-k400",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "无线 / 集成触控板 / 美国页面"
+              },
+              {
+                "id": "real-mxmini-v",
+                "product_id": "real-mxmini",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "Bluetooth / 紧凑 / 美国页面"
+              },
+              {
+                "id": "real-m240-v",
+                "product_id": "real-m240",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "Off-White / Bluetooth / 美国页面"
+              },
+              {
+                "id": "real-m350s-v",
+                "product_id": "real-m350s",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "Tonal Rose / Bluetooth / 美国页面"
+              },
+              {
+                "id": "real-m185-v",
+                "product_id": "real-m185",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "紧凑无线 / 美国页面"
+              },
+              {
+                "id": "real-mxanywhere3s-v",
+                "product_id": "real-mxanywhere3s",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "Bluetooth / 美国页面"
+              },
+              {
+                "id": "real-lamp1s-v",
+                "product_id": "real-lamp1s",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "白色 / MJTD01SYL"
+              },
+              {
+                "id": "real-lamplite-v",
+                "product_id": "real-lamplite",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "白色 / 9290041693/MJTD12YL"
+              },
+              {
+                "id": "real-lamppro-v",
+                "product_id": "real-lamppro",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "MJTD02YL / 西班牙地区资料"
+              },
+              {
+                "id": "real-hub45363-v",
+                "product_id": "real-hub45363",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "6合1 / 阿联酋地区资料"
+              },
+              {
+                "id": "real-hub45365-v",
+                "product_id": "real-hub45365",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "7合1 / Black / 加拿大地区资料"
+              },
+              {
+                "id": "real-hub60515-v",
+                "product_id": "real-hub60515",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "7合1 / 英国地区资料"
+              },
+              {
+                "id": "real-standugreen-v",
+                "product_id": "real-standugreen",
+                "sku": "未取得独立 SKU；以品牌型号和此规格识别",
+                "spec": "折叠铝合金 / 欧洲页面"
+              }
+            ],
+            "offers": [
+              {
+                "id": "real-k380s-o",
+                "variant_id": "real-k380s-v",
+                "merchant": "Logitech 官方资料",
+                "price_minor": null,
+                "currency": "GBP",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-07T14:10:00+00:00",
+                "valid_until": null,
+                "url": "https://www.logitech.com/en-gb/shop/p/pebble-keys-2.920-011821",
+                "purchase": "external",
+                "conditions": "没有可用于当前规划的实时报价；全球资料不保证本地在售或配送。"
+              },
+              {
+                "id": "real-a24i-o",
+                "variant_id": "real-a24i-v",
+                "merchant": "Xiaomi 官方资料",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-07T14:10:00+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "reference",
+                "conditions": "没有可用于当前规划的实时报价；全球资料不保证本地在售或配送。"
+              },
+              {
+                "id": "real-mouse2-o",
+                "variant_id": "real-mouse2-v",
+                "merchant": "Xiaomi 官方资料",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-07T14:10:00+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "reference",
+                "conditions": "没有可用于当前规划的实时报价；全球资料不保证本地在售或配送。"
+              },
+              {
+                "id": "real-light-o",
+                "variant_id": "real-light-v",
+                "merchant": "Xiaomi 官方资料",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-07T14:10:00+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "reference",
+                "conditions": "没有可用于当前规划的实时报价；全球资料不保证本地在售或配送。"
+              },
+              {
+                "id": "test-kbd1-o",
+                "variant_id": "test-kbd1-v",
+                "merchant": "本地演练商店",
+                "price_minor": 15900,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "fixture",
+                "captured_at": "2026-09-07T14:10:00+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "local_demo",
+                "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+              },
+              {
+                "id": "test-kbd2-o",
+                "variant_id": "test-kbd2-v",
+                "merchant": "本地演练商店",
+                "price_minor": 22900,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "fixture",
+                "captured_at": "2026-09-07T14:10:00+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "local_demo",
+                "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+              },
+              {
+                "id": "test-mon1-o",
+                "variant_id": "test-mon1-v",
+                "merchant": "本地演练商店",
+                "price_minor": 49900,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "fixture",
+                "captured_at": "2026-09-07T14:10:00+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "local_demo",
+                "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+              },
+              {
+                "id": "test-mon2-o",
+                "variant_id": "test-mon2-v",
+                "merchant": "本地演练商店",
+                "price_minor": 79900,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "fixture",
+                "captured_at": "2026-09-07T14:10:00+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "local_demo",
+                "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+              },
+              {
+                "id": "test-lamp1-o",
+                "variant_id": "test-lamp1-v",
+                "merchant": "本地演练商店",
+                "price_minor": 9900,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "fixture",
+                "captured_at": "2026-09-07T14:10:00+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "local_demo",
+                "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+              },
+              {
+                "id": "test-lamp2-o",
+                "variant_id": "test-lamp2-v",
+                "merchant": "本地演练商店",
+                "price_minor": 17900,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "fixture",
+                "captured_at": "2026-09-07T14:10:00+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "local_demo",
+                "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+              },
+              {
+                "id": "test-stand1-o",
+                "variant_id": "test-stand1-v",
+                "merchant": "本地演练商店",
+                "price_minor": 7900,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "fixture",
+                "captured_at": "2026-09-07T14:10:00+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "local_demo",
+                "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+              },
+              {
+                "id": "test-stand2-o",
+                "variant_id": "test-stand2-v",
+                "merchant": "本地演练商店",
+                "price_minor": 11900,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "fixture",
+                "captured_at": "2026-09-07T14:10:00+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "local_demo",
+                "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+              },
+              {
+                "id": "test-hub1-o",
+                "variant_id": "test-hub1-v",
+                "merchant": "本地演练商店",
+                "price_minor": 13900,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "fixture",
+                "captured_at": "2026-09-07T14:10:00+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "local_demo",
+                "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+              },
+              {
+                "id": "test-mouse1-o",
+                "variant_id": "test-mouse1-v",
+                "merchant": "本地演练商店",
+                "price_minor": 6900,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "fixture",
+                "captured_at": "2026-09-07T14:10:00+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "local_demo",
+                "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+              },
+              {
+                "id": "real-a27i-o",
+                "variant_id": "real-a27i-v",
+                "merchant": "Xiaomi 官方资料",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08T15:01:12.545436+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "reference",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              },
+              {
+                "id": "real-g27i-o",
+                "variant_id": "real-g27i-v",
+                "merchant": "Xiaomi 官方资料",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08T15:01:12.516348+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "reference",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              },
+              {
+                "id": "real-g27qi-o",
+                "variant_id": "real-g27qi-v",
+                "merchant": "Xiaomi 官方资料",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08T15:01:13.169203+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "reference",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              },
+              {
+                "id": "real-a22i-o",
+                "variant_id": "real-a22i-v",
+                "merchant": "Xiaomi 官方资料",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08T15:01:12.930523+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "reference",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              },
+              {
+                "id": "real-k250-o",
+                "variant_id": "real-k250-v",
+                "merchant": "Logitech 美国官方商店（以商家美元结算为准）",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08T15:01:24.744453+00:00",
+                "valid_until": null,
+                "url": "https://www.logitech.com/en-us/shop/p/k250",
+                "purchase": "external",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              },
+              {
+                "id": "real-k120-o",
+                "variant_id": "real-k120-v",
+                "merchant": "Logitech 美国官方商店（以商家美元结算为准）",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08T15:01:19.436953+00:00",
+                "valid_until": null,
+                "url": "https://www.logitech.com/en-us/shop/p/k120-usb-standard-computer",
+                "purchase": "external",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              },
+              {
+                "id": "real-k270-o",
+                "variant_id": "real-k270-v",
+                "merchant": "Logitech 美国官方商店（以商家美元结算为准）",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08T15:01:19.823242+00:00",
+                "valid_until": null,
+                "url": "https://www.logitech.com/en-us/shop/p/k270-unifying-wireless",
+                "purchase": "external",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              },
+              {
+                "id": "real-k400-o",
+                "variant_id": "real-k400-v",
+                "merchant": "Logitech 美国官方商店（以商家美元结算为准）",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08T15:01:30.885095+00:00",
+                "valid_until": null,
+                "url": "https://www.logitech.com/en-us/shop/p/k400-plus-touchpad-keyboard",
+                "purchase": "external",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              },
+              {
+                "id": "real-mxmini-o",
+                "variant_id": "real-mxmini-v",
+                "merchant": "Logitech 美国官方商店（以商家美元结算为准）",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08T15:01:28.522006+00:00",
+                "valid_until": null,
+                "url": "https://www.logitech.com/en-us/shop/p/mx-keys-mini",
+                "purchase": "external",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              },
+              {
+                "id": "real-m240-o",
+                "variant_id": "real-m240-v",
+                "merchant": "Logitech 美国官方商店（以商家美元结算为准）",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08T15:01:29.005525+00:00",
+                "valid_until": null,
+                "url": "https://www.logitech.com/en-us/shop/p/m240-silent-bluetooth-mouse",
+                "purchase": "external",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              },
+              {
+                "id": "real-m350s-o",
+                "variant_id": "real-m350s-v",
+                "merchant": "Logitech 美国官方商店（以商家美元结算为准）",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08T15:01:35.747374+00:00",
+                "valid_until": null,
+                "url": "https://www.logitech.com/en-us/shop/p/pebble-2-m350s-wireless-mouse",
+                "purchase": "external",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              },
+              {
+                "id": "real-m185-o",
+                "variant_id": "real-m185-v",
+                "merchant": "Logitech 美国官方商店（以商家美元结算为准）",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08T15:01:41.536793+00:00",
+                "valid_until": null,
+                "url": "https://www.logitech.com/en-us/shop/p/m185-wireless-mouse",
+                "purchase": "external",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              },
+              {
+                "id": "real-mxanywhere3s-o",
+                "variant_id": "real-mxanywhere3s-v",
+                "merchant": "Logitech 美国官方商店（以商家美元结算为准）",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08",
+                "valid_until": null,
+                "url": "https://www.logitech.com/en-us/shop/p/mx-anywhere-3s",
+                "purchase": "external",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              },
+              {
+                "id": "real-lamp1s-o",
+                "variant_id": "real-lamp1s-v",
+                "merchant": "Xiaomi 官方资料",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08T15:01:31.612419+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "reference",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              },
+              {
+                "id": "real-lamplite-o",
+                "variant_id": "real-lamplite-v",
+                "merchant": "Xiaomi 官方资料",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08T15:01:32.250141+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "reference",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              },
+              {
+                "id": "real-lamppro-o",
+                "variant_id": "real-lamppro-v",
+                "merchant": "Xiaomi 官方资料",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08T15:01:33.091050+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "reference",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              },
+              {
+                "id": "real-hub45363-o",
+                "variant_id": "real-hub45363-v",
+                "merchant": "UGREEN 官方资料",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08",
+                "valid_until": null,
+                "url": null,
+                "purchase": "reference",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              },
+              {
+                "id": "real-hub45365-o",
+                "variant_id": "real-hub45365-v",
+                "merchant": "UGREEN 官方资料",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08T15:02:20.983747+00:00",
+                "valid_until": null,
+                "url": null,
+                "purchase": "reference",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              },
+              {
+                "id": "real-hub60515-o",
+                "variant_id": "real-hub60515-v",
+                "merchant": "UGREEN 官方资料",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08",
+                "valid_until": null,
+                "url": null,
+                "purchase": "reference",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              },
+              {
+                "id": "real-standugreen-o",
+                "variant_id": "real-standugreen-v",
+                "merchant": "UGREEN 官方资料",
+                "price_minor": null,
+                "currency": "CNY",
+                "shipping_minor": null,
+                "stock": "unknown",
+                "price_kind": "unknown",
+                "captured_at": "2026-09-08",
+                "valid_until": null,
+                "url": null,
+                "purchase": "reference",
+                "conditions": "CNY 价格未核实，不能证明满足预算。海外参考价不换算或合计；实际结算币种、税费与中国配送以商家为准。"
+              }
+            ]
+          },
+          "reserve_final_response": true,
+          "status": "failed",
+          "error": "已达到今日模型调用预算上限",
+          "category": "依赖故障",
+          "ended_at": "2026-09-09T16:54:43.027178+00:00",
+          "events": [],
+          "tool_calls": 0,
+          "estimated_cost_cny": null,
+          "latency_ms": 76.69
+        }
+      ],
+      "run_error": {
+        "message": "已达到今日模型调用预算上限",
+        "category": "依赖故障"
+      },
+      "hard_constraints": [
+        {
+          "type": "budget_state",
+          "expected": {
+            "value": 30000
+          },
+          "actual": null,
+          "passed": false
+        },
+        {
+          "type": "category_present",
+          "expected": {
+            "value": "键盘"
+          },
+          "actual": [],
+          "passed": false
+        },
+        {
+          "type": "count",
+          "expected": {
+            "min": 1,
+            "max": 1
+          },
+          "actual": 0,
+          "passed": false
+        }
+      ],
+      "hard_constraints_passed": false,
+      "tool_call_correctness": {
+        "passed": false,
+        "checks": [
+          {
+            "rule": "required",
+            "tool": "search_products",
+            "passed": false
+          },
+          {
+            "rule": "required",
+            "tool": "read_evidence",
+            "passed": false
+          },
+          {
+            "rule": "required",
+            "tool": "set_plan",
+            "passed": false
+          },
+          {
+            "rule": "no_duplicate_tool_and_args_within_turn",
+            "passed": true,
+            "duplicates": []
+          },
+          {
+            "rule": "selected_items_have_successful_read_evidence",
+            "passed": true
+          },
+          {
+            "rule": "real_search_query_nonempty",
+            "passed": true
+          },
+          {
+            "rule": "no_unexpected_tool_failure",
+            "passed": true,
+            "failures": []
+          }
+        ]
+      },
+      "dynamic_modification": null,
+      "boundary": {
+        "violated": false,
+        "violations": []
+      },
+      "clarification": {
+        "expected": "not_required",
+        "passed": false,
+        "observed_items": 0,
+        "tools": []
+      },
+      "task_success": false
+    }
+  ],
+  "runs": [
+    {
+      "started_at": "2026-09-09T16:54:42.948763+00:00",
+      "case_ids": [
+        "N01"
+      ],
+      "maximum_model_requests": 5,
+      "budget_used_before": 309,
+      "ended_at": "2026-09-09T16:54:43.037871+00:00",
+      "requests_used": 1,
+      "budget_used_after": 310
+    }
+  ],
+  "invalid_attempts": [],
+  "manual_review": null,
+  "ended_at": "2026-09-09T16:54:43.039363+00:00",
+  "summary": {
+    "task_success": {
+      "numerator": 0,
+      "denominator": 1,
+      "rate": 0.0,
+      "percent": 0.0
+    },
+    "hard_constraint_item_satisfaction": {
+      "numerator": 0,
+      "denominator": 3,
+      "rate": 0.0,
+      "percent": 0.0
+    },
+    "hard_constraint_task_satisfaction": {
+      "numerator": 0,
+      "denominator": 1,
+      "rate": 0.0,
+      "percent": 0.0
+    },
+    "dynamic_modification_success": {
+      "numerator": 0,
+      "denominator": 0,
+      "rate": null,
+      "percent": null
+    },
+    "tool_call_correctness": {
+      "numerator": 0,
+      "denominator": 1,
+      "rate": 0.0,
+      "percent": 0.0
+    },
+    "boundary_violation": {
+      "numerator": 0,
+      "denominator": 1,
+      "rate": 0.0,
+      "percent": 0.0
+    },
+    "clarification_appropriateness": {
+      "numerator": 0,
+      "denominator": 1,
+      "rate": 0.0,
+      "percent": 0.0
+    },
+    "average_model_calls_per_task": 0.0,
+    "average_tool_calls_per_task": 0.0,
+    "model_calls": 0,
+    "tool_calls": 0,
+    "ran": 1,
+    "not_run": 0
+  },
+  "budget_reservations_used": 1,
+  "model_requests": 0,
+  "cost": {
+    "known_cny": 0,
+    "known_model_requests": 0,
+    "unknown_model_requests": 0,
+    "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+    "date": "2026-09-08"
+  },
+  "persistent_budget_at_finalize": {
+    "cap": 315,
+    "used": 310,
+    "remaining": 5
+  }
+}

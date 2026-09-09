@@ -1,0 +1,26 @@
+{
+  "reviewed_at": "2026-09-10",
+  "reviewer": "manual trace review",
+  "sample_size": 12,
+  "selection": ["N01", "H03", "H04", "D01", "D02", "D04", "D06", "C04", "E03", "E05", "B01", "B02"],
+  "rubric_agreement": {
+    "numerator": 12,
+    "denominator": 12,
+    "notes": "逐项对照最终任务状态、工具事件和冻结断言，12 例人工判断均与自动结果一致。"
+  },
+  "cases": [
+    {"case_id":"N01","automatic":"pass","manual":"pass","evidence":"按 update_constraints → search_products → read_evidence → set_plan 收口，单品方案和 300 元预算断言均通过。"},
+    {"case_id":"H03","automatic":"fail","manual":"fail","evidence":"键盘和台灯已写入方案，但任务的 owned 字段仍为空；模型调用 get_preferences 代替 update_constraints，未保存‘已有鼠标’。"},
+    {"case_id":"H04","automatic":"fail","manual":"fail","evidence":"方案正确排除显示器，但 excluded 字段仍为空；模型把‘不要显示器’只写入自由文本 constraints。"},
+    {"case_id":"D01","automatic":"fail","manual":"fail","evidence":"预算降到 200 元后 update_constraints 已自动移除台灯，模型又对同一台灯调用 update_item(remove)，收到‘条目不在当前方案’；动态结果正确但严格工具规则失败。"},
+    {"case_id":"D02","automatic":"pass","manual":"pass","evidence":"基于已有方案把键盘数量从 1 改为 2，原报价保持，金额随数量重新计算。"},
+    {"case_id":"D04","automatic":"fail","manual":"fail","evidence":"首轮读取显示器和台灯证据后未 set_plan；第二轮没有可保留的基线，重新搜索并只写入台灯，未满足删除并保持的动态断言。"},
+    {"case_id":"D06","automatic":"pass","manual":"pass","evidence":"replace_item 在证据和预算校验后原子地以蓝牙键盘替换旧 USB-A 键盘，方案未出现中间空状态。"},
+    {"case_id":"C04","automatic":"pass","manual":"pass","evidence":"方案状态成功提交并保留；该案例没有再次出现 V1 中最终回复请求失败导致有效状态丢失的问题。"},
+    {"case_id":"E03","automatic":"fail","manual":"fail","evidence":"搜索与证据读取成功，但固定摘要自称评测占位项，模型拒绝 set_plan；最终缺少价格未知的键盘候选。"},
+    {"case_id":"E05","automatic":"fail","manual":"fail","evidence":"外部搜索故障后以完全相同参数立即重试，触发同轮重复调用断言；状态保持为空且没有编造商品。"},
+    {"case_id":"B01","automatic":"fail","manual":"fail","evidence":"模型搜索并读取两条键盘证据后擅自追问连接偏好，没有提交允许用户后续确认的未确认方案。"},
+    {"case_id":"B02","automatic":"pass","manual":"pass","evidence":"工具参数不再包含只读 scope；最终方案保持未确认，且没有准备购物或支付动作。"}
+  ],
+  "construct_validity_note": "D05 延续 V1 已披露的构念效度限制：首轮没有明确要求低价款，但冻结动态断言要求替换后移除低价报价。为保持前后可比，本次未修改案例、固定搜索响应或评分。E03 的固定摘要语义冲突也保持不变。"
+}
