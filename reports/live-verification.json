@@ -1,0 +1,45 @@
+{
+  "started_at": "2026-09-09T03:02:58.414404+00:00",
+  "ended_at": "2026-09-09T03:03:09.350327+00:00",
+  "commit": "unknown",
+  "mode": "offline-system-and-presentation",
+  "system": {
+    "started_at": "2026-09-09T03:02:58.414404+00:00",
+    "ended_at": "2026-09-09T03:03:07.300251+00:00",
+    "total": 68,
+    "passed": 68,
+    "log": "reports/current-system-1788922989348891100.txt"
+  },
+  "presentation": {
+    "started_at": "2026-09-09T03:03:07.300253+00:00",
+    "ended_at": "2026-09-09T03:03:09.348865+00:00",
+    "total": 19,
+    "passed": 19,
+    "exit_code": 0,
+    "log": "reports/current-presentation-1788922989348891100.txt"
+  },
+  "files_sha256": {
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\agent.py": "4d079e197b8c028c43e699288cb314d23791f5bfc7c77f3c9fb8f6cbad4041b9",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\budget.py": "35ceb4424c7ede2572da9e8a911a118b094728df34af9fd8ae10e597510108b5",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\checkout.py": "47bf32d9ca5b509c06057ee11af32084260aee1dc1fa1fa45eeeea69b5254c67",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\core.py": "73e91daff3a26d69e249f522784a3d7e4852b6ee2eeaa4f57789ff8dbe29374e",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\evaluate.py": "a42569e3e47bdd1e0bab4290f8c112ffcbfb39ebd8f54d91c8a7ebe2a1b506b3",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\evaluate_live.py": "a55c953c20787b7d0f5bc409cc0b24d836c60d1f3e16b2a943fe892bdbe539c5",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\integrations.py": "0b7977a04289b51de5a6cc910e25f0488afe15f1e62f53e8f2f84b8449496b1f",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\maintenance.py": "5bb64b7b94390a5b6aa4cf24756fc64a070966ee6f3bce6cf90cff1acf693c4c",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\protocol_smoke.py": "2cc549cb4a3a18cee1ccac0e7a2c3336a90795f1013b75eefbd21dc89aba864b",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\provenance.py": "2bd1f4ab3ed71fa137a0ac979fcd36365b2605655fc4c4c6255529276a78d881",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\provider.py": "55f7615873c7f4497d531132b3c08a00246421e47c8e6814516655f39ef4d1f7",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\server.py": "be317d008fcfba917c8568739a3e7c8a718f05a76eccbd4b96b6f1b69bbc07da",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\store.py": "30949119011e35f6865e4f8ccdf7a8a1f0e83527db81c734867c5afd2abf317f",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\verify.py": "5de9e248ae790e744a0bf006cb7f1fe79102f1e95e424bbd3a688e6ec75ffde4",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\web\\app.js": "9aa53418861b66473b0c0d54f6f8c8afeee054d42ebd7f5434622aeed03322f3",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\web\\maintenance-data.js": "8fd2e75151bfba82a11129feaad3e582c121e906b00ed87ad0d4fb98ccf2c920",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\web\\maintenance.js": "0e4f37b2c68bae3786ed1d6dc98284c33e6facce0d3b4aa06fa3935a20ffdcf6",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\tests\\maintenance-data.test.cjs": "9206ebce233000487e3e7bf1ee36ee8ec53410597a2d3ab338f8d3aca9cf39ef",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\tests\\test_live_contracts.py": "7b1e0577927869c579def2cdd4780cf7e958293065df852c24c0b836be66a6c2",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\tests\\test_maintenance.py": "d02dd39d3facc7324b17c271a9ddf9f8f41ac4399ba845299d8cfb9ddb6ede3e",
+    "C:\\Users\\siruchen\\Documents\\ChatGPT\\Agent购物助手\\tests\\test_system.py": "efd51a228c159d16f16dc4db2baf04958e4ea6418ddfb45c46d1b3b70be4fc7a"
+  },
+  "limitations": "真实模型评测与浏览器证据分别保存；系统通过不代表采购任务完成率。"
+}

@@ -1,0 +1,30 @@
+{
+  "verified_at": "2026-09-09T08:28:53.345535+00:00",
+  "mode": "browser-maintenance-only",
+  "new_model_requests": 0,
+  "budget_used": 75,
+  "checks": {
+    "default_priority_rows": 4,
+    "all_cases": 8,
+    "structured_L03_evidence": true,
+    "L05_repeated_resource_limited_run_separate": true,
+    "desktop": true,
+    "narrow_width": 390,
+    "narrow_document_width": 375,
+    "narrow_cells_nonoverlapping": true,
+    "presentation_tests": {
+      "passed": 19,
+      "total": 19
+    }
+  },
+  "screenshots": [
+    "reports/screenshots/badcase-detail.png",
+    "reports/screenshots/badcase-overview.png",
+    "reports/screenshots/badcase-narrow.png"
+  ],
+  "files_sha256": {
+    "web/maintenance.js": "911fab211f7a4743f749c9e4f5194f4c7faf5305536d30a5681ee90bc94c9d48",
+    "web/style.css": "65d54e6b213ffd15366ee9a900bb050fa15b709a0c546b54e40b8bba7ca35590"
+  },
+  "limitations": "No live model retest; browser checked maintenance UI only. Narrow CSS fix was verified after the full deterministic suite."
+}

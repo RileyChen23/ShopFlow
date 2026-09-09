@@ -1,0 +1,52 @@
+{
+  "started_at": "2026-09-09T08:07:53.508240+00:00",
+  "ended_at": "2026-09-09T08:08:01.926752+00:00",
+  "mode": "deterministic-contract-validation",
+  "commit": "unknown",
+  "system": {
+    "started_at": "2026-09-09T08:07:53.508240+00:00",
+    "ended_at": "2026-09-09T08:08:01.653807+00:00",
+    "total": 79,
+    "passed": 79,
+    "log": "reports/badcase-system-1788941281923929600.txt"
+  },
+  "presentation": {
+    "started_at": "2026-09-09T08:08:01.653810+00:00",
+    "ended_at": "2026-09-09T08:08:01.922717+00:00",
+    "total": 19,
+    "passed": 19,
+    "log": "reports/badcase-presentation-1788941281923929600.txt",
+    "exit_code": 0
+  },
+  "budget": {
+    "before": 75,
+    "after": 75,
+    "new_requests": 0
+  },
+  "files_sha256": {
+    "agent.py": "518cdac66eb554e2d1414e6798bd1d0821f91a7b1a6587934362d4ea440e6b12",
+    "budget.py": "35ceb4424c7ede2572da9e8a911a118b094728df34af9fd8ae10e597510108b5",
+    "checkout.py": "47bf32d9ca5b509c06057ee11af32084260aee1dc1fa1fa45eeeea69b5254c67",
+    "core.py": "73e91daff3a26d69e249f522784a3d7e4852b6ee2eeaa4f57789ff8dbe29374e",
+    "evaluate.py": "a42569e3e47bdd1e0bab4290f8c112ffcbfb39ebd8f54d91c8a7ebe2a1b506b3",
+    "evaluate_live.py": "e374a38edd2a15673592f480253ee2e28c3a05dde55b82173238136d65728be0",
+    "integrations.py": "0b7977a04289b51de5a6cc910e25f0488afe15f1e62f53e8f2f84b8449496b1f",
+    "maintenance.py": "f6049920d4018096fa792c181fa189c0ab6d9fce8ceada47d2ce2852a40d98f3",
+    "protocol_smoke.py": "6d7f29dd3f2af9565aa38bbf6bd5d0170c3c1c4b811cbe727db02020cd359c18",
+    "provenance.py": "2bd1f4ab3ed71fa137a0ac979fcd36365b2605655fc4c4c6255529276a78d881",
+    "provider.py": "3787b58e6964b2f61bd883dcfdb2ae560810c9476376f773d856ad8971f0bb51",
+    "server.py": "be317d008fcfba917c8568739a3e7c8a718f05a76eccbd4b96b6f1b69bbc07da",
+    "store.py": "30949119011e35f6865e4f8ccdf7a8a1f0e83527db81c734867c5afd2abf317f",
+    "tool_contracts.py": "eab21ab4fed2c583936166f1b01362ecb0eb8cbbc92fec3879fd0ef59df839ae",
+    "verify.py": "5de9e248ae790e744a0bf006cb7f1fe79102f1e95e424bbd3a688e6ec75ffde4",
+    "web\\app.js": "9aa53418861b66473b0c0d54f6f8c8afeee054d42ebd7f5434622aeed03322f3",
+    "web\\maintenance-data.js": "8fd2e75151bfba82a11129feaad3e582c121e906b00ed87ad0d4fb98ccf2c920",
+    "web\\maintenance.js": "d2ca5e7fbe407a598dfa72e77b9aee3c10c912b105cfe6105f1f54d9f3b2d675",
+    "tests\\maintenance-data.test.cjs": "9206ebce233000487e3e7bf1ee36ee8ec53410597a2d3ab338f8d3aca9cf39ef",
+    "tests\\test_badcases.py": "5a049827a125c7eeac3fe2920f2ca0d9282861396a5e53c301dbb57aa10fd504",
+    "tests\\test_live_contracts.py": "7b1e0577927869c579def2cdd4780cf7e958293065df852c24c0b836be66a6c2",
+    "tests\\test_maintenance.py": "d02dd39d3facc7324b17c271a9ddf9f8f41ac4399ba845299d8cfb9ddb6ede3e",
+    "tests\\test_system.py": "efd51a228c159d16f16dc4db2baf04958e4ea6418ddfb45c46d1b3b70be4fc7a"
+  },
+  "limitations": "本轮模型未复测；脚本化模型响应只验证工具契约，不能作为真实模型成绩。旧批次、旧Prompt和旧评分断言未改写。"
+}

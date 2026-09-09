@@ -1,0 +1,18 @@
+{
+  "created_at": "2026-09-08T15:26:29.961183+00:00",
+  "catalog_version": "catalog-2026-09-08-reviewed",
+  "verified_models": 24,
+  "categories": {
+    "键盘": 6,
+    "显示器": 5,
+    "鼠标": 5,
+    "台灯": 4,
+    "扩展坞": 3,
+    "支架": 1
+  },
+  "fixture_models": 10,
+  "direct_product_images": 14,
+  "known_cny_prices": 0,
+  "overseas_reference_quotes": 4,
+  "missing": "中国实时报价、库存、配送；部分图片直链。24 型号低于期望约25–40，未为凑数伪造。"
+}

@@ -1,0 +1,678 @@
+{
+  "version": "catalog-2026-09-07",
+  "products": [
+    {
+      "id": "real-k380s",
+      "kind": "verified",
+      "brand": "Logitech",
+      "name": "Pebble Keys 2 K380s",
+      "category": "键盘",
+      "attributes": {
+        "connection": "Bluetooth",
+        "keys": "低键程、安静按键",
+        "devices": "可切换 3 台设备"
+      },
+      "limitations": [
+        "英国商店规格与布局；是否配送中国未知。安静是厂商描述，不等同于无声实测。"
+      ],
+      "image": null,
+      "image_source": null,
+      "evidence": [
+        {
+          "fields": [
+            "name",
+            "attributes"
+          ],
+          "url": "https://www.logitech.com/en-gb/shop/p/pebble-keys-2.920-011821",
+          "excerpt": "厂商页：Bluetooth；quiet low-profile keys；Easy-Switch 可切换三台设备。",
+          "checked_at": "2026-09-07T14:10:00+00:00"
+        }
+      ]
+    },
+    {
+      "id": "real-a24i",
+      "kind": "verified",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Monitor A24i",
+      "category": "显示器",
+      "attributes": {
+        "resolution": "1920 × 1080",
+        "size": "23.8 英寸",
+        "ports": "DP 1.4 ×1 / HDMI ×1"
+      },
+      "limitations": [
+        "未核实主机视频输出能力。"
+      ],
+      "image": null,
+      "image_source": null,
+      "evidence": [
+        {
+          "fields": [
+            "attributes",
+            "name"
+          ],
+          "url": "https://www.mi.com/global/product/xiaomi-monitor-a24i/specs/",
+          "excerpt": "规格页：P24FBA-RAGL；23.8 英寸；1920×1080；DP 1.4 和 HDMI 输入。",
+          "checked_at": "2026-09-07T14:10:00+00:00"
+        }
+      ]
+    },
+    {
+      "id": "real-mouse2",
+      "kind": "verified",
+      "brand": "Xiaomi",
+      "name": "Xiaomi Dual-mode Wireless Mouse 2",
+      "category": "鼠标",
+      "attributes": {
+        "connection": "2.4 GHz / Bluetooth",
+        "resolution": "1200 DPI"
+      },
+      "limitations": [
+        "macOS 不支持侧键功能；2.4 GHz 接收器需要 USB-A 端口。"
+      ],
+      "image": null,
+      "image_source": null,
+      "evidence": [
+        {
+          "fields": [
+            "attributes",
+            "limitations"
+          ],
+          "url": "https://www.mi.com/global/support/faq/details/KA-497422/",
+          "excerpt": "FAQ：双模连接、1200 DPI；macOS 不支持侧键。",
+          "checked_at": "2026-09-07T14:10:00+00:00"
+        }
+      ]
+    },
+    {
+      "id": "real-light",
+      "kind": "verified",
+      "brand": "Xiaomi",
+      "name": "Mi Computer Monitor Light Bar",
+      "category": "台灯",
+      "attributes": {
+        "mount": "桌面显示器挂灯",
+        "dimming": "可调亮度与色温"
+      },
+      "requires_monitor": true,
+      "limitations": [
+        "显示器厚度上限 32 mm；小于 10 mm 调角度时需手扶；不建议笔记本使用。"
+      ],
+      "image": "https://i01.appmifile.com/webfile/globalimg/products/pc/mi-computer-monitor-light-bar/s07c.jpg",
+      "image_source": "https://www.mi.com/global/product/mi-computer-monitor-light-bar/",
+      "evidence": [
+        {
+          "fields": [
+            "attributes",
+            "limitations"
+          ],
+          "url": "https://www.mi.com/global/product/mi-computer-monitor-light-bar/",
+          "excerpt": "官方安装说明：桌面显示器厚度不超过 32 mm，不建议用于笔记本。",
+          "checked_at": "2026-09-07T14:10:00+00:00"
+        }
+      ]
+    },
+    {
+      "id": "test-kbd1",
+      "kind": "fixture",
+      "brand": "演练样品",
+      "name": "轻声薄膜键盘",
+      "category": "键盘",
+      "attributes": {
+        "connection": "USB-A",
+        "quiet": "演练：低噪声"
+      },
+      "limitations": [
+        "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+      ],
+      "image": null,
+      "image_source": null,
+      "evidence": [
+        {
+          "fields": [
+            "attributes",
+            "name"
+          ],
+          "url": null,
+          "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+          "checked_at": "2026-09-07T14:10:00+00:00"
+        }
+      ]
+    },
+    {
+      "id": "test-kbd2",
+      "kind": "fixture",
+      "brand": "演练样品",
+      "name": "紧凑蓝牙键盘",
+      "category": "键盘",
+      "attributes": {
+        "connection": "Bluetooth",
+        "quiet": "演练：低噪声"
+      },
+      "limitations": [
+        "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+      ],
+      "image": null,
+      "image_source": null,
+      "evidence": [
+        {
+          "fields": [
+            "attributes",
+            "name"
+          ],
+          "url": null,
+          "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+          "checked_at": "2026-09-07T14:10:00+00:00"
+        }
+      ]
+    },
+    {
+      "id": "test-mon1",
+      "kind": "fixture",
+      "brand": "演练样品",
+      "name": "23.8 英寸办公显示器",
+      "category": "显示器",
+      "attributes": {
+        "ports": "演练：HDMI 输入",
+        "size": "23.8 英寸"
+      },
+      "limitations": [
+        "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+      ],
+      "image": null,
+      "image_source": null,
+      "evidence": [
+        {
+          "fields": [
+            "attributes",
+            "name"
+          ],
+          "url": null,
+          "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+          "checked_at": "2026-09-07T14:10:00+00:00"
+        }
+      ]
+    },
+    {
+      "id": "test-mon2",
+      "kind": "fixture",
+      "brand": "演练样品",
+      "name": "27 英寸办公显示器",
+      "category": "显示器",
+      "attributes": {
+        "ports": "演练：HDMI / DP 输入",
+        "size": "27 英寸"
+      },
+      "limitations": [
+        "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+      ],
+      "image": null,
+      "image_source": null,
+      "evidence": [
+        {
+          "fields": [
+            "attributes",
+            "name"
+          ],
+          "url": null,
+          "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+          "checked_at": "2026-09-07T14:10:00+00:00"
+        }
+      ]
+    },
+    {
+      "id": "test-lamp1",
+      "kind": "fixture",
+      "brand": "演练样品",
+      "name": "可调光桌面台灯",
+      "category": "台灯",
+      "attributes": {
+        "dimming": "演练：三档调光"
+      },
+      "limitations": [
+        "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+      ],
+      "image": null,
+      "image_source": null,
+      "evidence": [
+        {
+          "fields": [
+            "attributes",
+            "name"
+          ],
+          "url": null,
+          "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+          "checked_at": "2026-09-07T14:10:00+00:00"
+        }
+      ]
+    },
+    {
+      "id": "test-lamp2",
+      "kind": "fixture",
+      "brand": "演练样品",
+      "name": "长臂阅读台灯",
+      "category": "台灯",
+      "attributes": {
+        "mount": "演练：夹持厚度待核实"
+      },
+      "limitations": [
+        "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+      ],
+      "image": null,
+      "image_source": null,
+      "evidence": [
+        {
+          "fields": [
+            "attributes",
+            "name"
+          ],
+          "url": null,
+          "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+          "checked_at": "2026-09-07T14:10:00+00:00"
+        }
+      ]
+    },
+    {
+      "id": "test-stand1",
+      "kind": "fixture",
+      "brand": "演练样品",
+      "name": "折叠笔记本支架",
+      "category": "支架",
+      "attributes": {
+        "load": "演练：5 kg；需确认电脑尺寸"
+      },
+      "limitations": [
+        "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+      ],
+      "image": null,
+      "image_source": null,
+      "evidence": [
+        {
+          "fields": [
+            "attributes",
+            "name"
+          ],
+          "url": null,
+          "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+          "checked_at": "2026-09-07T14:10:00+00:00"
+        }
+      ]
+    },
+    {
+      "id": "test-stand2",
+      "kind": "fixture",
+      "brand": "演练样品",
+      "name": "桌面增高架",
+      "category": "支架",
+      "attributes": {
+        "width": "演练：50 cm"
+      },
+      "limitations": [
+        "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+      ],
+      "image": null,
+      "image_source": null,
+      "evidence": [
+        {
+          "fields": [
+            "attributes",
+            "name"
+          ],
+          "url": null,
+          "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+          "checked_at": "2026-09-07T14:10:00+00:00"
+        }
+      ]
+    },
+    {
+      "id": "test-hub1",
+      "kind": "fixture",
+      "brand": "演练样品",
+      "name": "多口转接器",
+      "category": "扩展坞",
+      "attributes": {
+        "ports": "演练：USB-A ×2、HDMI ×1；主机需支持视频输出"
+      },
+      "limitations": [
+        "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+      ],
+      "image": null,
+      "image_source": null,
+      "evidence": [
+        {
+          "fields": [
+            "attributes",
+            "name"
+          ],
+          "url": null,
+          "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+          "checked_at": "2026-09-07T14:10:00+00:00"
+        }
+      ]
+    },
+    {
+      "id": "test-mouse1",
+      "kind": "fixture",
+      "brand": "演练样品",
+      "name": "静音无线鼠标",
+      "category": "鼠标",
+      "attributes": {
+        "connection": "演练：USB-A 接收器"
+      },
+      "limitations": [
+        "虚构测试样品，不销售、不履约；参数与价格仅用于软件验证。"
+      ],
+      "image": null,
+      "image_source": null,
+      "evidence": [
+        {
+          "fields": [
+            "attributes",
+            "name"
+          ],
+          "url": null,
+          "excerpt": "固定夹具 catalog-2026-09-07；非真实商品事实。",
+          "checked_at": "2026-09-07T14:10:00+00:00"
+        }
+      ]
+    }
+  ],
+  "variants": [
+    {
+      "id": "real-k380s-v",
+      "product_id": "real-k380s",
+      "sku": "920-011821",
+      "spec": "玫瑰色 / 英国商店页面 / 布局待核实"
+    },
+    {
+      "id": "real-a24i-v",
+      "product_id": "real-a24i",
+      "sku": "P24FBA-RAGL",
+      "spec": "23.8 英寸 / P24FBA-RAGL"
+    },
+    {
+      "id": "real-mouse2-v",
+      "product_id": "real-mouse2",
+      "sku": "未获取官方 SKU",
+      "spec": "黑色 / 双模"
+    },
+    {
+      "id": "real-light-v",
+      "product_id": "real-light",
+      "sku": "未获取官方 SKU",
+      "spec": "挂灯 / 无线遥控"
+    },
+    {
+      "id": "test-kbd1-v",
+      "product_id": "test-kbd1",
+      "sku": "TEST-KBD1",
+      "spec": "深灰 / USB-A / 87 键"
+    },
+    {
+      "id": "test-kbd2-v",
+      "product_id": "test-kbd2",
+      "sku": "TEST-KBD2",
+      "spec": "米白 / Bluetooth / 78 键"
+    },
+    {
+      "id": "test-mon1-v",
+      "product_id": "test-mon1",
+      "sku": "TEST-MON1",
+      "spec": "黑色 / 1080p / HDMI"
+    },
+    {
+      "id": "test-mon2-v",
+      "product_id": "test-mon2",
+      "sku": "TEST-MON2",
+      "spec": "黑色 / 1440p / HDMI + DP"
+    },
+    {
+      "id": "test-lamp1-v",
+      "product_id": "test-lamp1",
+      "sku": "TEST-LAMP1",
+      "spec": "白色 / 独立底座"
+    },
+    {
+      "id": "test-lamp2-v",
+      "product_id": "test-lamp2",
+      "sku": "TEST-LAMP2",
+      "spec": "米白 / 桌夹式"
+    },
+    {
+      "id": "test-stand1-v",
+      "product_id": "test-stand1",
+      "sku": "TEST-STAND1",
+      "spec": "银色 / 折叠式"
+    },
+    {
+      "id": "test-stand2-v",
+      "product_id": "test-stand2",
+      "sku": "TEST-STAND2",
+      "spec": "浅木色 / 50 cm"
+    },
+    {
+      "id": "test-hub1-v",
+      "product_id": "test-hub1",
+      "sku": "TEST-HUB1",
+      "spec": "灰色 / USB-C 接入"
+    },
+    {
+      "id": "test-mouse1-v",
+      "product_id": "test-mouse1",
+      "sku": "TEST-MOUSE1",
+      "spec": "灰色 / 2.4 GHz"
+    }
+  ],
+  "offers": [
+    {
+      "id": "real-k380s-o",
+      "variant_id": "real-k380s-v",
+      "merchant": "Logitech 官方资料",
+      "price_minor": null,
+      "currency": "GBP",
+      "shipping_minor": null,
+      "stock": "unknown",
+      "price_kind": "unknown",
+      "captured_at": "2026-09-07T14:10:00+00:00",
+      "valid_until": null,
+      "url": "https://www.logitech.com/en-gb/shop/p/pebble-keys-2.920-011821",
+      "purchase": "external",
+      "conditions": "没有可用于当前规划的实时报价；全球资料不保证本地在售或配送。"
+    },
+    {
+      "id": "real-a24i-o",
+      "variant_id": "real-a24i-v",
+      "merchant": "Xiaomi 官方资料",
+      "price_minor": null,
+      "currency": "CNY",
+      "shipping_minor": null,
+      "stock": "unknown",
+      "price_kind": "unknown",
+      "captured_at": "2026-09-07T14:10:00+00:00",
+      "valid_until": null,
+      "url": null,
+      "purchase": "reference",
+      "conditions": "没有可用于当前规划的实时报价；全球资料不保证本地在售或配送。"
+    },
+    {
+      "id": "real-mouse2-o",
+      "variant_id": "real-mouse2-v",
+      "merchant": "Xiaomi 官方资料",
+      "price_minor": null,
+      "currency": "CNY",
+      "shipping_minor": null,
+      "stock": "unknown",
+      "price_kind": "unknown",
+      "captured_at": "2026-09-07T14:10:00+00:00",
+      "valid_until": null,
+      "url": null,
+      "purchase": "reference",
+      "conditions": "没有可用于当前规划的实时报价；全球资料不保证本地在售或配送。"
+    },
+    {
+      "id": "real-light-o",
+      "variant_id": "real-light-v",
+      "merchant": "Xiaomi 官方资料",
+      "price_minor": null,
+      "currency": "CNY",
+      "shipping_minor": null,
+      "stock": "unknown",
+      "price_kind": "unknown",
+      "captured_at": "2026-09-07T14:10:00+00:00",
+      "valid_until": null,
+      "url": null,
+      "purchase": "reference",
+      "conditions": "没有可用于当前规划的实时报价；全球资料不保证本地在售或配送。"
+    },
+    {
+      "id": "test-kbd1-o",
+      "variant_id": "test-kbd1-v",
+      "merchant": "本地演练商店",
+      "price_minor": 15900,
+      "currency": "CNY",
+      "shipping_minor": null,
+      "stock": "unknown",
+      "price_kind": "fixture",
+      "captured_at": "2026-09-07T14:10:00+00:00",
+      "valid_until": null,
+      "url": null,
+      "purchase": "local_demo",
+      "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+    },
+    {
+      "id": "test-kbd2-o",
+      "variant_id": "test-kbd2-v",
+      "merchant": "本地演练商店",
+      "price_minor": 22900,
+      "currency": "CNY",
+      "shipping_minor": null,
+      "stock": "unknown",
+      "price_kind": "fixture",
+      "captured_at": "2026-09-07T14:10:00+00:00",
+      "valid_until": null,
+      "url": null,
+      "purchase": "local_demo",
+      "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+    },
+    {
+      "id": "test-mon1-o",
+      "variant_id": "test-mon1-v",
+      "merchant": "本地演练商店",
+      "price_minor": 49900,
+      "currency": "CNY",
+      "shipping_minor": null,
+      "stock": "unknown",
+      "price_kind": "fixture",
+      "captured_at": "2026-09-07T14:10:00+00:00",
+      "valid_until": null,
+      "url": null,
+      "purchase": "local_demo",
+      "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+    },
+    {
+      "id": "test-mon2-o",
+      "variant_id": "test-mon2-v",
+      "merchant": "本地演练商店",
+      "price_minor": 79900,
+      "currency": "CNY",
+      "shipping_minor": null,
+      "stock": "unknown",
+      "price_kind": "fixture",
+      "captured_at": "2026-09-07T14:10:00+00:00",
+      "valid_until": null,
+      "url": null,
+      "purchase": "local_demo",
+      "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+    },
+    {
+      "id": "test-lamp1-o",
+      "variant_id": "test-lamp1-v",
+      "merchant": "本地演练商店",
+      "price_minor": 9900,
+      "currency": "CNY",
+      "shipping_minor": null,
+      "stock": "unknown",
+      "price_kind": "fixture",
+      "captured_at": "2026-09-07T14:10:00+00:00",
+      "valid_until": null,
+      "url": null,
+      "purchase": "local_demo",
+      "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+    },
+    {
+      "id": "test-lamp2-o",
+      "variant_id": "test-lamp2-v",
+      "merchant": "本地演练商店",
+      "price_minor": 17900,
+      "currency": "CNY",
+      "shipping_minor": null,
+      "stock": "unknown",
+      "price_kind": "fixture",
+      "captured_at": "2026-09-07T14:10:00+00:00",
+      "valid_until": null,
+      "url": null,
+      "purchase": "local_demo",
+      "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+    },
+    {
+      "id": "test-stand1-o",
+      "variant_id": "test-stand1-v",
+      "merchant": "本地演练商店",
+      "price_minor": 7900,
+      "currency": "CNY",
+      "shipping_minor": null,
+      "stock": "unknown",
+      "price_kind": "fixture",
+      "captured_at": "2026-09-07T14:10:00+00:00",
+      "valid_until": null,
+      "url": null,
+      "purchase": "local_demo",
+      "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+    },
+    {
+      "id": "test-stand2-o",
+      "variant_id": "test-stand2-v",
+      "merchant": "本地演练商店",
+      "price_minor": 11900,
+      "currency": "CNY",
+      "shipping_minor": null,
+      "stock": "unknown",
+      "price_kind": "fixture",
+      "captured_at": "2026-09-07T14:10:00+00:00",
+      "valid_until": null,
+      "url": null,
+      "purchase": "local_demo",
+      "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+    },
+    {
+      "id": "test-hub1-o",
+      "variant_id": "test-hub1-v",
+      "merchant": "本地演练商店",
+      "price_minor": 13900,
+      "currency": "CNY",
+      "shipping_minor": null,
+      "stock": "unknown",
+      "price_kind": "fixture",
+      "captured_at": "2026-09-07T14:10:00+00:00",
+      "valid_until": null,
+      "url": null,
+      "purchase": "local_demo",
+      "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+    },
+    {
+      "id": "test-mouse1-o",
+      "variant_id": "test-mouse1-v",
+      "merchant": "本地演练商店",
+      "price_minor": 6900,
+      "currency": "CNY",
+      "shipping_minor": null,
+      "stock": "unknown",
+      "price_kind": "fixture",
+      "captured_at": "2026-09-07T14:10:00+00:00",
+      "valid_until": null,
+      "url": null,
+      "purchase": "local_demo",
+      "conditions": "固定测试报价，非市场价格。运费、库存未知；不产生真实订单。"
+    }
+  ]
+}

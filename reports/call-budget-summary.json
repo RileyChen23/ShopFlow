@@ -1,0 +1,16 @@
+{
+  "recorded_at": "2026-09-09T02:58:17.976718+00:00",
+  "authorized_cap": 80,
+  "reserved_requests": 75,
+  "remaining": 5,
+  "evaluated_and_browser_calls": 75,
+  "known_estimated_cny": 0.1684643,
+  "unknown_cost_requests": 0,
+  "price_date": "2026-09-08",
+  "price_source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+  "outside_budget_protocol_reports": [
+    "protocol-1788875017944705100.json",
+    "protocol-1788878777288169500.json"
+  ],
+  "note": "此80次授权范围与初始协议探测分开；零调用故障夹具不当作付费请求。估算不等于账单。"
+}

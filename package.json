@@ -1,0 +1,1 @@
+{"name":"shopflow","version":"0.1.0","private":true,"scripts":{"start":"python server.py","test":"python -m unittest discover -s tests -v","eval":"python evaluate.py --mode offline"}}

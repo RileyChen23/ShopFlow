@@ -1,0 +1,11 @@
+.env
+data/*.sqlite*
+__pycache__/
+*.pyc
+runtime/
+docs/interview.md
+reports/live-*.json
+!reports/live-blocked.json
+
+!reports/live-eval-*.json
+!reports/live-verification.json

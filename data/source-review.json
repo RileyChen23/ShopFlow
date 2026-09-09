@@ -1,0 +1,240 @@
+[
+  [
+    "a27i",
+    "Xiaomi Monitor A27i",
+    "显示器",
+    "27英寸 / P27FBA-RAGL",
+    {
+      "resolution": "1920×1080",
+      "refresh": "100Hz",
+      "ports": "DP ×1 / HDMI 2.0 ×1"
+    },
+    "https://www.mi.com/global/product/xiaomi-monitor-a27i/specs/"
+  ],
+  [
+    "g27i",
+    "Xiaomi Gaming Monitor G27i",
+    "显示器",
+    "27英寸 / P27FBB-RGGL",
+    {
+      "resolution": "1920×1080",
+      "refresh": "165Hz",
+      "ports": "DP / HDMI 2.0"
+    },
+    "https://www.mi.com/global/product/xiaomi-gaming-monitor-g27i/specs/"
+  ],
+  [
+    "g27qi",
+    "Xiaomi 2K Gaming Monitor G27Qi",
+    "显示器",
+    "27英寸 / P27QCA-RGGL",
+    {
+      "resolution": "2560×1440",
+      "refresh": "180Hz",
+      "ports": "DP ×2 / HDMI ×2"
+    },
+    "https://www.mi.com/global/product/xiaomi-2k-gaming-monitor-g27qi/specs/"
+  ],
+  [
+    "a22i",
+    "Xiaomi Monitor A22i",
+    "显示器",
+    "21.45英寸 / A22FAB-RAGL",
+    {
+      "resolution": "1920×1080",
+      "refresh": "HDMI 75Hz",
+      "ports": "HDMI 1.4 / VGA"
+    },
+    "https://www.mi.com/global/product/xiaomi-monitor-a22i/specs/"
+  ],
+  [
+    "k250",
+    "Logitech K250",
+    "键盘",
+    "Graphite / Bluetooth / 美国页面",
+    {
+      "connection": "Bluetooth",
+      "layout": "紧凑、有数字区",
+      "keys": "深键程"
+    },
+    "https://www.logitech.com/en-us/shop/p/k250"
+  ],
+  [
+    "k120",
+    "Logitech K120",
+    "键盘",
+    "USB 有线 / 全尺寸 / 美国页面",
+    {
+      "connection": "USB",
+      "layout": "全尺寸数字区",
+      "tilt": "可调支脚"
+    },
+    "https://www.logitech.com/en-us/shop/p/k120-usb-standard-computer"
+  ],
+  [
+    "k270",
+    "Logitech K270",
+    "键盘",
+    "无线 Unifying / 美国页面",
+    {
+      "connection": "Unifying USB 接收器",
+      "layout": "全尺寸"
+    },
+    "https://www.logitech.com/en-us/shop/p/k270-unifying-wireless"
+  ],
+  [
+    "k400",
+    "Logitech K400 Plus",
+    "键盘",
+    "无线 / 集成触控板 / 美国页面",
+    {
+      "connection": "无线 USB 接收器",
+      "touchpad": "集成触控板"
+    },
+    "https://www.logitech.com/en-us/shop/p/k400-plus-touchpad-keyboard"
+  ],
+  [
+    "mxmini",
+    "Logitech MX Keys Mini",
+    "键盘",
+    "Bluetooth / 紧凑 / 美国页面",
+    {
+      "connection": "Bluetooth",
+      "backlight": "背光",
+      "keys": "低键程"
+    },
+    "https://www.logitech.com/en-us/shop/p/mx-keys-mini"
+  ],
+  [
+    "m240",
+    "Logitech M240 Silent",
+    "鼠标",
+    "Off-White / Bluetooth / 美国页面",
+    {
+      "connection": "Bluetooth",
+      "noise": "厂商描述：quiet 低噪声点击",
+      "battery": "厂商最长18个月，依使用而异"
+    },
+    "https://www.logitech.com/en-us/shop/p/m240-silent-bluetooth-mouse"
+  ],
+  [
+    "m350s",
+    "Logitech Pebble Mouse 2 M350s",
+    "鼠标",
+    "Tonal Rose / Bluetooth / 美国页面",
+    {
+      "connection": "Bluetooth",
+      "button": "可自定义中键",
+      "shape": "便携薄型"
+    },
+    "https://www.logitech.com/en-us/shop/p/pebble-2-m350s-wireless-mouse"
+  ],
+  [
+    "m185",
+    "Logitech M185",
+    "鼠标",
+    "紧凑无线 / 美国页面",
+    {
+      "connection": "无线",
+      "shape": "紧凑"
+    },
+    "https://www.logitech.com/en-us/shop/p/m185-wireless-mouse"
+  ],
+  [
+    "mxanywhere3s",
+    "Logitech MX Anywhere 3S",
+    "鼠标",
+    "Bluetooth / 美国页面",
+    {
+      "connection": "Bluetooth",
+      "shape": "便携"
+    },
+    "https://www.logitech.com/en-us/shop/p/mx-anywhere-3s"
+  ],
+  [
+    "lamp1s",
+    "Mi LED Desk Lamp 1S",
+    "台灯",
+    "白色 / MJTD01SYL",
+    {
+      "temperature": "2600–5000K",
+      "flux": "520lm",
+      "cri": "Ra90",
+      "power": "9W"
+    },
+    "https://www.mi.com/global/product/mi-led-desk-lamp-1s/specs/"
+  ],
+  [
+    "lamplite",
+    "Xiaomi Desk Lamp Lite",
+    "台灯",
+    "白色 / 9290041693/MJTD12YL",
+    {
+      "temperature": "3900K ±300K",
+      "cri": "90",
+      "power": "7.5W"
+    },
+    "https://www.mi.com/global/product/xiaomi-desk-lamp-lite/specs/"
+  ],
+  [
+    "lamppro",
+    "Mi Smart LED Desk Lamp Pro",
+    "台灯",
+    "MJTD02YL / 西班牙地区资料",
+    {
+      "temperature": "2500–4800K",
+      "flux": "700lm（3900K最大亮度条件）",
+      "cri": "Ra90",
+      "power": "12.5W"
+    },
+    "https://www.mi.com/es/product/mi-smart-led-desk-lamp-pro/specs/"
+  ],
+  [
+    "hub45363",
+    "UGREEN Revodok 45363",
+    "扩展坞",
+    "6合1 / 阿联酋地区资料",
+    {
+      "ports": "2 USB-C 数据 / 2 USB-A / HDMI / PD",
+      "hdmi": "4K60Hz（依主机协议）",
+      "data": "10Gbps",
+      "power": "PD100W输入，实际输出待核实"
+    },
+    "https://www.ugreen.com/en-ae/products/ae-45363"
+  ],
+  [
+    "hub45365",
+    "UGREEN Revodok Pro 45365",
+    "扩展坞",
+    "7合1 / Black / 加拿大地区资料",
+    {
+      "ports": "双HDMI / 2 USB-A / 2 USB-C数据 / PD",
+      "data": "10Gbps",
+      "hdmi": "双4K60Hz，macOS多扩展屏相同内容",
+      "power": "PD100W输入"
+    },
+    "https://www.ugreen.com/en-ca/products/ca-45365"
+  ],
+  [
+    "hub60515",
+    "UGREEN Revodok 107 60515",
+    "扩展坞",
+    "7合1 / 英国地区资料",
+    {
+      "ports": "HDMI / RJ45 / 读卡",
+      "hdmi": "4K60Hz（依主机协议）"
+    },
+    "https://www.ugreen.com/en-gb/products/uk-60515"
+  ],
+  [
+    "standugreen",
+    "UGREEN Laptop Stand for Desk Adjustable",
+    "支架",
+    "折叠铝合金 / 欧洲页面",
+    {
+      "size": "厂商标称适配8–17.3英寸",
+      "structure": "折叠便携，附收纳袋"
+    },
+    "https://eu.ugreen.com/products/ugreen-laptop-stand-for-desk-adjustable"
+  ]
+]

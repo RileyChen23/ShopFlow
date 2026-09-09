@@ -1,0 +1,10 @@
+PRAGMA journal_mode=WAL;
+CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, csrf TEXT NOT NULL, created TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS tasks (id TEXT PRIMARY KEY, owner TEXT NOT NULL REFERENCES sessions(id), revision INTEGER NOT NULL, body TEXT NOT NULL, updated TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS tasks_owner ON tasks(owner, updated);
+CREATE TABLE IF NOT EXISTS preferences (owner TEXT PRIMARY KEY REFERENCES sessions(id), body TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS runs (id TEXT PRIMARY KEY, owner TEXT NOT NULL, task_id TEXT, body TEXT NOT NULL, created TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS runs_owner ON runs(owner, created);
+CREATE TABLE IF NOT EXISTS carts (id TEXT PRIMARY KEY, owner TEXT NOT NULL, task_id TEXT NOT NULL, revision INTEGER NOT NULL, state TEXT NOT NULL, body TEXT NOT NULL, UNIQUE(task_id,revision));
+CREATE TABLE IF NOT EXISTS usage_budget (day TEXT PRIMARY KEY, calls INTEGER NOT NULL);
+PRAGMA user_version=1;

@@ -1,0 +1,124 @@
+TAP version 13
+# Subtest: denominator and percentage points use aligned cases
+ok 1 - denominator and percentage points use aligned cases
+  ---
+  duration_ms: 3.6564
+  type: 'test'
+  ...
+# Subtest: historical grouped totals match case results
+ok 2 - historical grouped totals match case results
+  ---
+  duration_ms: 7.9295
+  type: 'test'
+  ...
+# Subtest: missing report does not yield success
+ok 3 - missing report does not yield success
+  ---
+  duration_ms: 0.1378
+  type: 'test'
+  ...
+# Subtest: zero successes and all failures stay zero
+ok 4 - zero successes and all failures stay zero
+  ---
+  duration_ms: 0.1771
+  type: 'test'
+  ...
+# Subtest: skipped is included in denominator but not successes
+ok 5 - skipped is included in denominator but not successes
+  ---
+  duration_ms: 0.4371
+  type: 'test'
+  ...
+# Subtest: different IDs cannot look like improvement
+ok 6 - different IDs cannot look like improvement
+  ---
+  duration_ms: 0.1523
+  type: 'test'
+  ...
+# Subtest: duplicate IDs are not counted as comparable
+ok 7 - duplicate IDs are not counted as comparable
+  ---
+  duration_ms: 0.1125
+  type: 'test'
+  ...
+# Subtest: execution modes and models cannot mix
+ok 8 - execution modes and models cannot mix
+  ---
+  duration_ms: 0.1399
+  type: 'test'
+  ...
+# Subtest: missing identity and group mismatch cannot compare
+ok 9 - missing identity and group mismatch cannot compare
+  ---
+  duration_ms: 0.1285
+  type: 'test'
+  ...
+# Subtest: same selected version is not an experiment
+ok 10 - same selected version is not an experiment
+  ---
+  duration_ms: 0.139
+  type: 'test'
+  ...
+# Subtest: duration distinguishes missing and zero
+ok 11 - duration distinguishes missing and zero
+  ---
+  duration_ms: 0.354
+  type: 'test'
+  ...
+# Subtest: cost distinguishes no call, missing and actual zero
+ok 12 - cost distinguishes no call, missing and actual zero
+  ---
+  duration_ms: 0.8327
+  type: 'test'
+  ...
+# Subtest: filter statistics and median are scoped and omit unknown
+ok 13 - filter statistics and median are scoped and omit unknown
+  ---
+  duration_ms: 1.6202
+  type: 'test'
+  ...
+# Subtest: case filters handle all, improved, failed and pending
+ok 14 - case filters handle all, improved, failed and pending
+  ---
+  duration_ms: 0.2035
+  type: 'test'
+  ...
+# Subtest: semantic statuses do not claim purchases
+ok 15 - semantic statuses do not claim purchases
+  ---
+  duration_ms: 0.1328
+  type: 'test'
+  ...
+# Subtest: large long input and missing fields remain calculable
+ok 16 - large long input and missing fields remain calculable
+  ---
+  duration_ms: 1.55
+  type: 'test'
+  ...
+# Subtest: top-level model, catalog and missing group block comparison
+ok 17 - top-level model, catalog and missing group block comparison
+  ---
+  duration_ms: 0.1518
+  type: 'test'
+  ...
+# Subtest: saved report summaries agree with actual group rows
+ok 18 - saved report summaries agree with actual group rows
+  ---
+  duration_ms: 0.3807
+  type: 'test'
+  ...
+# Subtest: CNY estimates preserve real zero and missing usage
+ok 19 - CNY estimates preserve real zero and missing usage
+  ---
+  duration_ms: 0.1376
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 154.4679

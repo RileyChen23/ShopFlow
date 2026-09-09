@@ -1,0 +1,10 @@
+{
+  "created": "2026-09-08T05:25:40.380186+00:00",
+  "test_set": "eval-2026-09-07-v1",
+  "catalog_version": "catalog-2026-09-07",
+  "catalog_sha256": "16e831ea983022109103aee88485c55a092ef1379fb74ddf8d16ba5cfd247f9c",
+  "test_set_sha256": "4b1456d484b0ce5fb5a9a0ba6d66b3167a673a2cbd8d412e70bc9a2a5a46319a",
+  "commit": "unknown",
+  "status": "未运行",
+  "reason": "缺 LLM_API_KEY / LLM_MODEL；未发出模型请求"
+}

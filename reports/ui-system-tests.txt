@@ -1,0 +1,57 @@
+test_changed_dataset_does_not_supply_expected_context (test_maintenance.MaintenanceTests.test_changed_dataset_does_not_supply_expected_context) ... ok
+test_history_hash_matches_and_empty_owner_list (test_maintenance.MaintenanceTests.test_history_hash_matches_and_empty_owner_list) ... ok
+test_missing_report_is_explicit (test_maintenance.MaintenanceTests.test_missing_report_is_explicit) ... ok
+test_owner_scoped_details_and_download (test_maintenance.MaintenanceTests.test_owner_scoped_details_and_download) ... ok
+test_raw_download_headers_and_whitelist (test_maintenance.MaintenanceTests.test_raw_download_headers_and_whitelist) ... ok
+test_cart_idempotency (test_system.APITests.test_cart_idempotency) ... ok
+test_cart_owner_isolation (test_system.APITests.test_cart_owner_isolation) ... ok
+test_change_revokes_confirmation (test_system.APITests.test_change_revokes_confirmation) ... ok
+test_chat_real_state (test_system.APITests.test_chat_real_state) ... ok
+test_checkout_failure_preserves (test_system.APITests.test_checkout_failure_preserves) ... ok
+test_confirmation_ack_required (test_system.APITests.test_confirmation_ack_required) ... ok
+test_cross_origin_denied (test_system.APITests.test_cross_origin_denied) ... ok
+test_csrf_required (test_system.APITests.test_csrf_required) ... ok
+test_jump_not_payment (test_system.APITests.test_jump_not_payment) ... ok
+test_no_confirmation_no_cart (test_system.APITests.test_no_confirmation_no_cart) ... ok
+test_no_userid_authority (test_system.APITests.test_no_userid_authority) ... ok
+test_preferences_isolated (test_system.APITests.test_preferences_isolated) ... ok
+test_session_isolation (test_system.APITests.test_session_isolation) ... ok
+test_stale_demo_checkout_rejected (test_system.APITests.test_stale_demo_checkout_rejected) ... ok
+test_stale_revision (test_system.APITests.test_stale_revision) ... ok
+test_test_lab_disabled (test_system.APITests.test_test_lab_disabled) ... ok
+test_unknown_outcome_not_retried (test_system.APITests.test_unknown_outcome_not_retried) ... ok
+test_user_purchase_label (test_system.APITests.test_user_purchase_label) ... ok
+test_model_cannot_call_checkout (test_system.AdapterContractTests.test_model_cannot_call_checkout) ... ok
+test_model_tools_and_unknown_usage (test_system.AdapterContractTests.test_model_tools_and_unknown_usage) ... ok
+test_multimerchant_handoff_grouping (test_system.AdapterContractTests.test_multimerchant_handoff_grouping) ... ok
+test_run_log_redaction (test_system.AdapterContractTests.test_run_log_redaction) ... ok
+test_clarification_followup_with_budget_creates_plan (test_system.BrowserRegressionTests.test_clarification_followup_with_budget_creates_plan) ... ok
+test_bool_quantity_rejected (test_system.DomainTests.test_bool_quantity_rejected) ... ok
+test_compatibility_unknown (test_system.DomainTests.test_compatibility_unknown) ... ok
+test_duplicate_identity (test_system.DomainTests.test_duplicate_identity) ... ok
+test_evidence_before_recommend (test_system.DomainTests.test_evidence_before_recommend) ... ok
+test_excluded_persists (test_system.DomainTests.test_excluded_persists) ... ok
+test_expired_quote_blocks_checkout (test_system.DomainTests.test_expired_quote_blocks_checkout) ... ok
+test_external_injection_is_data (test_system.DomainTests.test_external_injection_is_data) ... ok
+test_fixture_real_isolation (test_system.DomainTests.test_fixture_real_isolation) ... ok
+test_gift_ignores_owned (test_system.DomainTests.test_gift_ignores_owned) ... ok
+test_minor_units (test_system.DomainTests.test_minor_units) ... ok
+test_mixed_currency (test_system.DomainTests.test_mixed_currency) ... ok
+test_model_failure_rolls_back (test_system.DomainTests.test_model_failure_rolls_back) ... ok
+test_negative_quantity (test_system.DomainTests.test_negative_quantity) ... ok
+test_no_match_distinct_from_search_failure (test_system.DomainTests.test_no_match_distinct_from_search_failure) ... ok
+test_over_budget_atomic (test_system.DomainTests.test_over_budget_atomic) ... ok
+test_owned_dedup (test_system.DomainTests.test_owned_dedup) ... ok
+test_price_change_invalidates (test_system.DomainTests.test_price_change_invalidates) ... ok
+test_private_url_rejected (test_system.DomainTests.test_private_url_rejected) ... ok
+test_schema_extra_fields (test_system.DomainTests.test_schema_extra_fields) ... ok
+test_snapshot_immutable (test_system.DomainTests.test_snapshot_immutable) ... ok
+test_transaction_tool_unavailable (test_system.DomainTests.test_transaction_tool_unavailable) ... ok
+test_unknown_offer_id (test_system.DomainTests.test_unknown_offer_id) ... ok
+test_unknown_price_disclosed (test_system.DomainTests.test_unknown_price_disclosed) ... ok
+test_unknown_shipping_not_zero (test_system.DomainTests.test_unknown_shipping_not_zero) ... ok
+
+----------------------------------------------------------------------
+Ran 52 tests in 5.859s
+
+OK

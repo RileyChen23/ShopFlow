@@ -1,0 +1,93 @@
+import copy,json,os,time,unittest
+from pathlib import Path
+from unittest.mock import patch
+import core,agent,provider,store,tool_contracts,evaluate_live,maintenance
+
+def t(scope="demo"):
+    value=core.fresh_task("badcase-contract",scope);value["currency"]="CNY"
+    value["messages"]=[{"role":"user","content":"budget and plan"}];return value
+def line(oid="test-kbd1-o"):
+    return {"offer_id":oid,"quantity":1,"required":True,"reason":"fixture"}
+def response(name=None,args=None,answer=None):
+    m={"role":"assistant","content":answer}
+    if name:m["tool_calls"]=[{"id":"call-"+name,"type":"function","function":{"name":name,"arguments":json.dumps(args or {})}}]
+    return {"choices":[{"message":m,"finish_reason":"tool_calls" if name else "stop"}],"usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2,"prompt_cache_hit_tokens":0,"prompt_cache_miss_tokens":1}}
+class BadcaseContracts(unittest.TestCase):
+ def setUp(self):
+    self.env=patch.dict(os.environ,{"LLM_API_KEY":"test-only-not-real","LLM_PROVIDER":"deepseek","LLM_BASE_URL":"https://api.deepseek.com","LLM_MODEL":"deepseek-v4-flash","LLM_MAX_CALLS":"5","LLM_MAX_RETRIES":"1","LLM_THINKING":"disabled","LLM_PROMPT_VERSION":"live-bc-review"});self.env.start()
+    self.reserve=patch.object(store,"reserve_call");self.reserve.start()
+ def tearDown(self):self.reserve.stop();self.env.stop()
+ def test_units_display_zero_unknown_currency_and_no_mutation(self):
+    source={"budget_minor":50000,"currency":"CNY","offer":{"currency":"USD","price_minor":1299,"shipping_minor":None},"zero_minor":0}
+    original=copy.deepcopy(source);view=tool_contracts.money_view(source)
+    self.assertEqual(view["amounts"]["budget_minor"]["display"],"CNY 500.00")
+    self.assertEqual(view["offer"]["amounts"]["price_minor"]["display"],"USD 12.99")
+    self.assertIsNone(view["offer"]["amounts"]["shipping_minor"]["major_units"])
+    self.assertEqual(view["amounts"]["zero_minor"]["major_units"],"0.00");self.assertEqual(source,original)
+ def test_search_scope_counts_do_not_equal_subset(self):
+    ctx=agent.Context(t("real"));args={"category":"键盘","query":"键盘 无线 USB"}
+    raw=ctx.execute("search_products",args);wire=tool_contracts.result(ctx,"search_products",raw,args)
+    self.assertEqual((wire["scope_total"],wire["total"],wire["category_total"],wire["matched"]),(24,23,5,2))
+    self.assertEqual(wire["count_unit"],"offers");self.assertEqual(len(wire["items"]),2)
+ def test_empty_search_is_not_failure(self):
+    ctx=agent.Context(t("real"));args={"category":"键盘","query":"unfindable-xyz"}
+    wire=tool_contracts.result(ctx,"search_products",ctx.execute("search_products",args),args)
+    self.assertEqual(wire["matched"],0);self.assertGreater(wire["category_total"],0)
+    with self.assertRaises(core.AppError):agent.Context(t(),fault="search").execute("search_products",args)
+ def test_scope_authorization_never_authorizes_purchase(self):
+    for scope,allowed in [("demo",True),("real",False)]:
+      view=tool_contracts.task_view(t(scope))
+      self.assertEqual(view["execution_policy"]["fixture_planning_allowed"],allowed)
+      self.assertIsNone(view["confirmation"])
+    with self.assertRaises(core.AppError):core.set_plan(t("real"),[line()])
+ def test_budget_side_effect_returns_current_offer_ids(self):
+    task=t();core.set_plan(task,[line(),line("test-lamp1-o")]);ctx=agent.Context(task)
+    raw=ctx.execute("update_constraints",{"budget_minor":20000})
+    wire=tool_contracts.result(ctx,"update_constraints",raw,{"budget_minor":20000})
+    self.assertEqual([x["offer_id"] for x in wire["current_items"]],["test-kbd1-o"])
+    with self.assertRaises(core.AppError):ctx.execute("update_item",{"offer_id":"test-lamp1-o","remove":True})
+    self.assertEqual(task["items"][0]["offer_id"],"test-kbd1-o")
+ def test_evidence_prerequisite_is_not_relaxed(self):
+    task=t();ctx=agent.Context(task)
+    with self.assertRaises(core.AppError):ctx.execute("set_plan",{"items":[line()]})
+    self.assertEqual(task["items"],[])
+    ctx.execute("read_evidence",{"offer_id":"test-kbd1-o"})
+    raw=ctx.execute("set_plan",{"items":[line()]});view=tool_contracts.result(ctx,"set_plan",raw,{})
+    self.assertTrue(view["validation"]["budget_checked"]);self.assertFalse(view["validation"]["committed"]);self.assertFalse(view["validation"]["purchase_confirmed"])
+ def test_l02_final_slot_contains_results_and_no_tools(self):
+    seen=[]
+    replies=[response("search_products",{"category":"键盘","query":""}),response("read_evidence",{"offer_id":"test-kbd1-o"}),response("update_constraints",{"budget_minor":100000}),response("set_plan",{"items":[line()]}),response(answer="已生成演练键盘方案，未知运费。")]
+    def post(url,payload,headers,timeout):
+      seen.append(copy.deepcopy(payload));return replies[len(seen)-1]
+    with patch.object(agent,"post_json",side_effect=post):task,trace=agent.run(t(),"plan",{},mode="live")
+    self.assertEqual(len(seen),5);self.assertEqual(seen[-1]["tools"],[])
+    result=json.loads(next(m["content"] for m in reversed(seen[-1]["messages"]) if m["role"]=="tool"))
+    self.assertTrue(result["validation"]["budget_checked"]);self.assertEqual(len(task["items"]),1)
+    self.assertEqual(trace["model_calls"],5);self.assertNotIn("check_plan",[e["tool"] for e in trace["events"]])
+ def test_retry_cannot_reopen_tools_in_last_slot(self):
+    failure=core.AppError("simulated transport",502);failure.retryable=True;seen=[]
+    def post(url,payload,headers,timeout):
+      seen.append(payload)
+      if len(seen)==1:raise failure
+      return response(answer="尚未形成方案。")
+    with patch.dict(os.environ,{"LLM_MAX_CALLS":"2"}),patch.object(agent,"post_json",side_effect=post):
+      _,trace=agent.run(t(),"plan",{},mode="live")
+    self.assertTrue(seen[0]["tools"]);self.assertEqual(seen[1]["tools"],[])
+    self.assertEqual(trace["model_calls"],2);self.assertEqual(len(trace["retries"]),1)
+ def test_insufficient_case_budget_does_not_call_model(self):
+    case={"id":"TEST","name":"two turns","split":"development","messages":["one","two"],"expected":{}}
+    with patch.object(agent,"run") as run:
+      row=evaluate_live.evaluate_case(case,"live-bc-review",lambda:5)
+    run.assert_not_called();self.assertTrue(row["resource_limited"]);self.assertEqual(row["traces"],[])
+ def test_historical_state_gap_is_real_and_score_not_rewritten(self):
+    r=json.loads((core.ROOT/"reports/live-eval-1788880562625025900.json").read_text(encoding="utf-8"))["rows"]["live-improved"][0]
+    self.assertTrue(r["passed"]);self.assertEqual(r["result"]["owned"],[]);self.assertEqual(r["result"]["excluded"],[])
+ def test_evidence_links_and_historical_hashes_resolve(self):
+    import hashlib
+    r=json.loads((core.ROOT/"reports/badcases.json").read_text(encoding="utf-8"))
+    self.assertEqual(len(r["cases"]),8)
+    for c in r["cases"]:
+      for evidence in c["refs"]:
+        path=core.ROOT/"reports"/(evidence["artifact"]+".json")
+        self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(),evidence["sha256"])
+        body,_=maintenance.artifact(evidence["artifact"]);self.assertTrue(body)

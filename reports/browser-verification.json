@@ -1,0 +1,82 @@
+{
+  "recorded_at": "2026-09-09T02:58:17.978877+00:00",
+  "session": "单独 localhost 浏览器会话，未删除原用户数据",
+  "model": "deepseek-v4-flash",
+  "steps": [
+    {
+      "name": "干净新会话、仅一个首页示例、默认真实资料",
+      "status": "verified"
+    },
+    {
+      "name": "1000元已有笔记本鼠标→追问→键盘台灯→600元排除显示器",
+      "status": "verified",
+      "note": "实际先聚焦键盘/台灯；显示器从未加入，排除约束已更新；未验证移除已选显示器"
+    },
+    {
+      "name": "显式确认→准备入口→打开Logitech K270官方页",
+      "status": "verified",
+      "url": "https://www.logitech.com/en-us/shop/p/k270-unifying-wireless",
+      "payment": "未付款、无订单回传；台灯仍只有资料"
+    },
+    {
+      "name": "刷新/重新打开恢复600元方案",
+      "status": "verified"
+    },
+    {
+      "name": "确认后界面修改数量，确认失效",
+      "status": "verified",
+      "revision": 8
+    },
+    {
+      "name": "K120明确单品、300元、仅1件、未确认",
+      "status": "verified",
+      "run_id": "074ea77a1080453c8ee15d2458559e00"
+    },
+    {
+      "name": "模型超时夹具→失败→保留K120和300元",
+      "status": "verified",
+      "run_id": "0eb540b0a09e4c13b75da76180cef1fb",
+      "actual_api_calls": 0
+    },
+    {
+      "name": "负预算输入",
+      "status": "verified-native-validation",
+      "note": "浏览器原生min限制阻止表单提交；刷新仍恢复300元"
+    },
+    {
+      "name": "桌面1280x900 / 窄屏390x844",
+      "status": "verified",
+      "scroll_widths": [
+        1265,
+        375
+      ],
+      "images_loaded": [
+        "Logitech K270",
+        "Mi LED Desk Lamp 1S"
+      ]
+    }
+  ],
+  "evidence": "browser-live-runs.json",
+  "screenshots": [
+    "screenshots/live-desktop.png",
+    "screenshots/live-narrow.png",
+    "screenshots/live-error.png",
+    "screenshots/live-evaluation.png",
+    "screenshots/live-evaluation-narrow.png",
+    "screenshots/live-evaluation-final.png"
+  ],
+  "limitations": [
+    "回复过长并有目录覆盖范围表述错误；不宣称解释全部正确",
+    "未执行真实付款或Shopify；中国实时报价和配送仍未知",
+    "真实外部动态搜索未接入；主动搜索为已核实资料库"
+  ],
+  "maintenance_verification": {
+    "recorded_at": "2026-09-09T03:05:36.252777+00:00",
+    "live_batches_distinct_from_history": true,
+    "failed_L03_visible": true,
+    "current_checks_visible": "68/68 + 19/19",
+    "narrow_width": 390,
+    "scroll_width": 375,
+    "model_request_usage_visible": true
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "id": "protocol-1788878777288169500",
+  "started_at": "2026-09-08T14:46:17.288186+00:00",
+  "model_calls": 3,
+  "model_ms": 3295.23,
+  "model_events": [
+    {
+      "number": 1,
+      "started_at": "2026-09-08T14:46:17.299203+00:00",
+      "status": "success",
+      "response_id": "c3c412c4-beaa-494a-9514-c174fecc8003",
+      "model": "deepseek-v4-flash",
+      "usage": {
+        "prompt_tokens": 10,
+        "completion_tokens": 3,
+        "total_tokens": 13,
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 10
+      },
+      "estimated_cost_cny": 2.85e-05,
+      "ended_at": "2026-09-08T14:46:18.366381+00:00",
+      "ms": 1067.2
+    },
+    {
+      "number": 2,
+      "started_at": "2026-09-08T14:46:18.373921+00:00",
+      "status": "success",
+      "response_id": "c1887074-6293-405d-a0c6-09b4f6eb976b",
+      "model": "deepseek-v4-flash",
+      "usage": {
+        "prompt_tokens": 300,
+        "completion_tokens": 27,
+        "total_tokens": 327,
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 300
+      },
+      "estimated_cost_cny": 0.0005715,
+      "ended_at": "2026-09-08T14:46:19.343574+00:00",
+      "ms": 969.68
+    },
+    {
+      "number": 3,
+      "started_at": "2026-09-08T14:46:19.362614+00:00",
+      "status": "success",
+      "response_id": "54182ea5-8149-4364-bf73-7fc2e3a72526",
+      "model": "deepseek-v4-flash",
+      "usage": {
+        "prompt_tokens": 262,
+        "completion_tokens": 40,
+        "total_tokens": 302,
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 262
+      },
+      "estimated_cost_cny": 0.000573,
+      "ended_at": "2026-09-08T14:46:20.620920+00:00",
+      "ms": 1258.35
+    }
+  ],
+  "usage_reports": [
+    {
+      "prompt_tokens": 10,
+      "completion_tokens": 3,
+      "total_tokens": 13,
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 10
+    },
+    {
+      "prompt_tokens": 300,
+      "completion_tokens": 27,
+      "total_tokens": 327,
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 300
+    },
+    {
+      "prompt_tokens": 262,
+      "completion_tokens": 40,
+      "total_tokens": 302,
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 262
+    }
+  ],
+  "retries": [],
+  "mode": "live",
+  "provider": "deepseek",
+  "endpoint_host": "api.deepseek.com",
+  "api_protocol": "chat-completions/function-tools",
+  "thinking": "disabled",
+  "stream": false,
+  "minimal_response": "连接正常。",
+  "status": "success",
+  "events": [
+    {
+      "tool": "get_task",
+      "input": {},
+      "started_at": "2026-09-08T14:46:19.343712+00:00",
+      "status": "success",
+      "result": {
+        "id": "bfe52108f8d34129a05f8e3f5cf2bfd9",
+        "revision": 0,
+        "title": "新的采购任务",
+        "scope": "real",
+        "budget_minor": 50000,
+        "recipient": "self",
+        "owned": [],
+        "excluded": [],
+        "constraints": [],
+        "items": [],
+        "messages": [],
+        "confirmation": null,
+        "status": "规划中",
+        "created": "2026-09-08T14:46:19.343672+00:00",
+        "totals": {
+          "subtotal_minor": 0,
+          "shipping_known_minor": 0,
+          "known_total_minor": 0,
+          "currency": "CNY",
+          "unknown": [],
+          "over_budget": false,
+          "remaining_minor": 50000,
+          "final_total_minor": 0
+        },
+        "compatibility": []
+      },
+      "ended_at": "2026-09-08T14:46:19.343915+00:00",
+      "ms": 0.21
+    }
+  ],
+  "answer": "根据当前任务工具返回的信息，该任务的**预算金额为 50000（货币单位 CNY）**，即 50,000 元人民币。\n\n如有下一步操作需求，请告知。",
+  "tool_result_returned": true,
+  "tools_selected": 1,
+  "ended_at": "2026-09-08T14:46:20.621074+00:00"
+}

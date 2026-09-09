@@ -1,0 +1,60 @@
+{
+  "created": "2026-09-08T10:04:06.294735+00:00",
+  "system": {
+    "total": 52,
+    "passed": 52,
+    "exit_code": 0
+  },
+  "presentation": {
+    "total": 18,
+    "passed": 18,
+    "exit_code": 0
+  },
+  "historical_report_sha256": "32f1e7a64bb215ce0c2d7b88346ef58179045192800aa4bad3f4bdd3e50b4e94",
+  "historical_report_unchanged": true,
+  "source_sha256": {
+    "server.py": "aea1cc1872cb81da73685ae8bd9dd577a13b4385622b16c460c1083d82f151ce",
+    "maintenance.py": "ea92be61b4f8444d51924867497f6e0b91cd23dd7e89de26f3c05193941faa15",
+    "store.py": "1bc78c43d512870c3b23d0d720215ee0b0c462b79b5c3a358e92b45f9e2850f2",
+    "web/app.js": "b2f258c1893c83751480870b9ddc254a3c423e0e0d5432386d025617bc7e3015",
+    "web/maintenance.js": "23f971d0c152a85483ef9f3b4d01706ee907c2dc6cb1050a0f66046045c690b6",
+    "web/maintenance-data.js": "5f999840b1ea199fdbe4964a9bb5e9bfc0eba94af068eeeee1620491934f4863",
+    "web/style.css": "f70916c7e594c9f4112a067445e5638eca060802a945f494dd5268fe4ecb4c34",
+    "web/index.html": "f4e7e2dfb420f77be6b36f9d37c7c7a0ff497920244e482b6cd3d80cf1837f76"
+  },
+  "browser": {
+    "status": "verified",
+    "desktop_width": 1280,
+    "mobile_width": 390,
+    "pages": [
+      "shopping",
+      "runs",
+      "run-detail",
+      "evaluation",
+      "case-detail"
+    ],
+    "shopping_smoke": [
+      "new task",
+      "budget 600",
+      "quantity 2",
+      "reload restored",
+      "confirm",
+      "local checkout completed without payment"
+    ],
+    "edge_cases": [
+      "isolated empty runs",
+      "missing report",
+      "partial fields and skipped case",
+      "100 synthetic runs, pagination 10 per page",
+      "long input collapsed",
+      "failure filter and detail"
+    ],
+    "screenshots": [
+      "screenshots/runs.png",
+      "screenshots/run-detail.png",
+      "screenshots/evaluation.png"
+    ]
+  },
+  "model_evaluation": "not run",
+  "shopify": "not integrated"
+}

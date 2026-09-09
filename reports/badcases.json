@@ -1,0 +1,353 @@
+{
+  "recorded_at": "2026-09-09T07:56:45.642935+00:00",
+  "schema_version": "badcase-review-v1",
+  "new_model_requests": 0,
+  "status_note": "已修复仅用于确定性基础设施修复或历史同次恢复；不代表模型行为已改善。所有本轮模型改动待真实复测。",
+  "cases": [
+    {
+      "id": "BC-L02",
+      "case_id": "L02",
+      "phenomenon": "方案已暂存，最后额度又用于检查，整轮未提交",
+      "status": "待处理",
+      "layer": "规划/路由 → 工具结果复用 → 终止条件 → 状态提交",
+      "impact": "任务失败、效率降低。已经选出的两项未提交，用户只能重试。",
+      "input": "预算1000元改善学习桌面，已有笔记本和鼠标；第二轮明确优先照明和打字、不买显示器。",
+      "expected": "读取证据、更新两项方案后在5次请求内结束；不额外重复已有确定性检查。",
+      "actual": "第二轮4次请求后set_plan返回两项、totals和compatibility，第5次又调用check_plan，没有最终回复，run抛出循环上限。",
+      "evidence": [
+        "6896…：search_products×2 → read_evidence×4 → update_constraints → set_plan(2项) → check_plan。所有工具成功；失败点是没有剩余请求生成最终回复。",
+        "set_plan 已返回已知总额、未知费用、over_budget及compatibility；check_plan重做这些计算，没有改变方案。",
+        "未观察到相同工具无限重复；只证明一次冗余检查挤占最后请求。此前第一轮还在广泛搜索后提出多个问题。"
+      ],
+      "root_cause": "末次请求仍开放工具，缺少确定性收尾约束；模型没有复用set_plan的检查结果。硬上限是触发失败的条件，不是数据或预算计算错误。",
+      "confidence": "高：事件顺序与返回字段直接可见。不能凭单次轨迹证明所有冗余检查均来自同一模型机制。",
+      "cause_vs_trigger": "根因候选：结果复用/终止契约；诱因：5次请求上限与此前的串行步骤；表象：最终结果未提交。",
+      "fix": "最后一次允许请求不再提供工具；若模型仍发工具调用，拒绝执行并记录终止条件错误。set_plan返回显式validation与next_action。没有提高次数或编造成功回复。",
+      "fix_layer": "状态机/终止条件，随后工具输出契约",
+      "why": "已有方案与计算都正确，先保护最后回复额度，比放宽上限或再次泛化Prompt更直接。",
+      "verification": "本轮用脚本模型重放5步链路，检查最后tools为空、真实set_plan结果回传且不增加请求；真实复测未运行。历史live-improved的L02通过，共7次请求（两轮）。",
+      "regression": "历史L03从通过变为失败，不能宣布前次提示整体提升。本轮拟与L03、保留L05一起复测。",
+      "risk": "最后额度到达时可能仍未构成方案；必须如实未完成，不保证所有需求5次足够。",
+      "versions": "live-baseline：失败 → live-improved：通过；本轮badcase-contract-v1：待真实复测",
+      "refs": [
+        {
+          "artifact": "live-eval-1788879902459415200",
+          "run_id": "6896bfabc0d0450983f451f07003efbe",
+          "started_at": "2026-09-08T15:05:22.205527+00:00",
+          "mode": "live",
+          "prompt_version": "live-baseline",
+          "sha256": "638e32fdec4576ddfecadb08ef22ab3b0714840e02b90402e06dabf8fb7dd2d6"
+        },
+        {
+          "artifact": "live-eval-1788880562625025900",
+          "run_id": "ae8a625f5ef04af38ac8426cd885e4ef",
+          "started_at": "2026-09-08T15:16:06.330363+00:00",
+          "mode": "live",
+          "prompt_version": "live-improved",
+          "sha256": "bcad9ecc7aa2d052460a5ef0f0cc5c9dd4210bc5c7d95e9670d32f69cbbf1642"
+        }
+      ]
+    },
+    {
+      "id": "BC-L03",
+      "case_id": "L03",
+      "phenomenon": "检索到合格测试候选，却拒绝将夹具加入演练方案",
+      "status": "回归退步",
+      "layer": "执行上下文 → 规划/路由 → 回复生成；状态机按未建方案工作",
+      "impact": "任务失败；第二轮预算更新成功，但没有可保留的键盘。",
+      "input": "预算1000元，选一把USB-A键盘和一盏台灯；台灯先不买，预算200元，保留键盘。scope=demo。",
+      "expected": "在明确的演练范围内读取测试依据并生成标明虚构的方案；第二轮保留159元键盘。",
+      "actual": "改进版检索后停在问是否演练；未调用read_evidence或set_plan。第二轮仅get_task/update_constraints，仍是空方案。",
+      "evidence": [
+        "263a…第一轮4次请求，USB-A 接口精确搜索0条，放宽为键盘全类得到2条，台灯2条。",
+        "短输出：‘由于这些资料都明确注明是测试资料而非真实商品价格，我不能……排入采购方案。’随后问‘是否继续在demo环境测试流程’。",
+        "100f…第二轮2次请求：get_task(items=[])、update_constraints(budget_minor=20000)；数量与品类断言失败。",
+        "baseline 8ea8…在同样夹具下读取依据并set_plan两项；因此不是目录没有合格商品。"
+      ],
+      "root_cause": "模型把‘不能把测试资料称为真实商品’扩大为‘不能规划演练’，而系统只给scope=demo，没有明确fixture_planning_allowed。对演练授权的理解不一致。",
+      "confidence": "高：直接拒绝理由明确。中：显式演练语义不足是可修复诱因。待确认：是否哪条新增Prompt导致，因为禁止冒充真实的句子两版共有，单次随机输出不能识别因果。",
+      "cause_vs_trigger": "不是已证实的用途不清。零命中增加了一次搜索但恢复后仍拒绝，属于诱因；过度追问是表象。",
+      "fix": "模型任务视图明确purpose与fixture_planning_allowed；单独候选Prompt只澄清demo可以规划夹具、real仍隔离，明确已具备条件的组合不额外问偏好。保留L02的结果复用与末次收尾。",
+      "fix_layer": "服务端执行上下文；然后候选Prompt条件说明",
+      "why": "先把真实/演练授权讲清楚，不用关键词硬塞方案，也不绕过证据校验。",
+      "verification": "确定性测试验证demo允许夹具规划语义、real不允许，候选Prompt独立命名未改旧文件。未发送真实复测，不能标为修复。",
+      "regression": "拟先跑目标L03（两轮），邻近L02（两轮），关键保留L05（一轮）；旧断言保留。",
+      "risk": "新增上下文可能仍被忽略；Prompt归因仍须对照，不把相关性说成因果。",
+      "versions": "live-baseline：通过 → live-improved：失败；live-bc-review：未运行",
+      "refs": [
+        {
+          "artifact": "live-eval-1788879902459415200",
+          "run_id": "8ea8255b6e3847c3ad108ce719f63c75",
+          "started_at": "2026-09-08T15:05:31.115033+00:00",
+          "mode": "live",
+          "prompt_version": "live-baseline",
+          "sha256": "638e32fdec4576ddfecadb08ef22ab3b0714840e02b90402e06dabf8fb7dd2d6"
+        },
+        {
+          "artifact": "live-eval-1788882341253307300",
+          "run_id": "263a43d56dd14ac1ba7078858a69ab52",
+          "started_at": "2026-09-08T15:45:41.275080+00:00",
+          "mode": "live",
+          "prompt_version": "live-improved",
+          "sha256": "dbfbbe4a162d6087eb8e3b7b318bafe78c30f0e6935e23aa1196c3a2c3d96c10"
+        },
+        {
+          "artifact": "live-eval-1788882341253307300",
+          "run_id": "100f31cc68634506a750e3c520bfc4cc",
+          "started_at": "2026-09-08T15:45:50.004587+00:00",
+          "mode": "live",
+          "prompt_version": "live-improved",
+          "sha256": "dbfbbe4a162d6087eb8e3b7b318bafe78c30f0e6935e23aa1196c3a2c3d96c10"
+        }
+      ]
+    },
+    {
+      "id": "BC-UNIT",
+      "case_id": "协议探测",
+      "phenomenon": "50000分被回复为50000元",
+      "status": "仍失败",
+      "layer": "工具返回单位契约 → 回复生成；确定性存储没有错",
+      "impact": "结果不可信；本次探测未创建采购方案或交易。",
+      "input": "先调用get_task读取当前任务，再说明预算；服务器budget_minor=50000，CNY。",
+      "expected": "CNY 500.00元；区分单位而非只证明工具回传。",
+      "actual": "协议status=success，但回复‘50000……即50,000元人民币’。",
+      "evidence": [
+        "工具原始结果budget_minor=50000，totals.currency=CNY；没有错误乘法或预算状态变更。",
+        "报告只断言tools_selected与tool_result_returned，未检查金额语义。",
+        "历史业务L01检查159元通过，但这不是原协议探测的同条件修复证明。"
+      ],
+      "root_cause": "minor虽出现在字段名，却没有明确机器换算后的显示值；生成层误解释。协议成功指标没有覆盖业务语义。",
+      "confidence": "高：原始值、回复和断言可比对。无法从日志证明模型内部如何理解minor。",
+      "cause_vs_trigger": "根因层：输出契约/显示转换；诱因：无业务提示的探测；表象：百倍金额差。",
+      "fix": "保留整数minor存储，schema注明分；用Decimal在服务端生成amounts，提供scale=100、major_units与display，null保留未知。初始任务和所有工具回传使用同一转换。",
+      "fix_layer": "工具schema、服务端确定性展示转换",
+      "why": "单位不应由模型猜测；不把Prompt说明作为唯一防线。",
+      "verification": "确定性测试覆盖50000→CNY500.00、零、null、币种和输入不变；原协议语义仍待3次真实探测。",
+      "regression": "L01金额邻近案例以及USD参考报价不混入CNY需复核。",
+      "risk": "模型仍可能忽略display，所以实际回复正确性仍待检查；协议旧success不能等同金额通过。",
+      "versions": "协议原始成功/金额错误 → 新显示契约已测，模型未复测",
+      "refs": [
+        {
+          "artifact": "protocol-1788878777288169500",
+          "run_id": "protocol-1788878777288169500",
+          "started_at": "2026-09-08T14:46:17.288186+00:00",
+          "mode": "live",
+          "prompt_version": "未记录（协议探测）",
+          "sha256": "8e93d467fe700fd3c4ed2bb4fe04553cd7069b49a159a3580b3b246938dc8e04"
+        }
+      ]
+    },
+    {
+      "id": "BC-SUBSET",
+      "case_id": "浏览器桌面方案",
+      "phenomenon": "把无线USB筛选出的2项说成整个键盘目录",
+      "status": "仍失败",
+      "layer": "商品检索结果契约 → 回复生成",
+      "impact": "结果不可信，用户可能错过已有候选。",
+      "input": "优先打字和照明，一个键盘和一个台灯，有USB接口，未知价格待核。真实资料/CNY。",
+      "expected": "说明筛选范围；不能从无线USB子集推断整个目录只有2款。",
+      "actual": "最终称‘数据库现有键盘里除了K270，只有……K400’。",
+      "evidence": [
+        "d140…先查外接键盘0条，再查‘键盘 无线 USB’2条；机械键盘0条。",
+        "历史返回是裸数组，没有total、matched、scope或filters。该数据快照实际有6个真实键盘型号；CNY范围5个报价，GBP1个不在本任务内。",
+        "过滤正确返回2条不等于目录只有2款；不是检索服务超时。"
+      ],
+      "root_cause": "模型把匹配子集外推为全集；裸数组没有显式范围和分母，加剧错误。",
+      "confidence": "高：查询、返回数、目录快照和原话均可追溯；返回元数据能否消除生成错误待真实验证。",
+      "cause_vs_trigger": "检索过滤不是错；输出范围信息不足是契约缺陷，模型外推是直接生成错误。",
+      "fix": "模型搜索回传items、scope、currency、scope_total、total、category_total、matched、returned、filters、truncated与count_unit=offers。零命中注明精确文本过滤，不静默放宽硬条件。",
+      "fix_layer": "工具输出契约；再补解释规则",
+      "why": "先让模型知道分母与过滤条件，而不是只增加‘不要幻觉’。",
+      "verification": "当前固定目录回放检验23个CNY报价/5个键盘报价/该过滤2个命中；空结果与故障分开。模型表述未复测。",
+      "regression": "建议追加一轮真实限定查询（上限5次），单独检查范围陈述与商品依据。",
+      "risk": "报价数不是型号数；多报价与币种过滤仍须按count_unit理解。",
+      "versions": "live-improved浏览器：错误；badcase-contract-v1：模型未运行",
+      "refs": [
+        {
+          "artifact": "browser-live-runs",
+          "run_id": "d140fc3df5c3405c903d98428c784b12",
+          "started_at": "2026-09-08T15:31:57.283117+00:00",
+          "mode": "live",
+          "prompt_version": "live-improved",
+          "sha256": "398b7361e4ff1803625d3383d7ede2d0c52527ec8ae49c42a753e6b27727e636"
+        }
+      ]
+    },
+    {
+      "id": "BC-EVIDENCE",
+      "case_id": "浏览器越序写入",
+      "phenomenon": "未读取证据先set_plan，被后端拦截后恢复",
+      "status": "已修复",
+      "layer": "工具选择顺序 → 状态更新防线",
+      "impact": "额外调用和延迟；未让无依据条目提交。",
+      "input": "与BC-SUBSET同一浏览器任务。",
+      "expected": "先读取所选报价依据，再写方案。",
+      "actual": "第一次set_plan被拒；模型随后读取两项证据，再次set_plan成功；运行status=partial保留错误。",
+      "evidence": [
+        "d140…set_plan错误：‘推荐前必须读取报价依据’；随后read_evidence(real-k270-o)、read_evidence(real-lamp1s-o)，第二次set_plan成功。",
+        "失败未改变暂存方案；同一运行6次请求，无静默伪成功。"
+      ],
+      "root_cause": "模型越过必需证据读取步骤；现有后端前置条件有效。",
+      "confidence": "高：拒绝与恢复均有工具事件。",
+      "cause_vs_trigger": "工具路由错误不是商品缺失；已修复仅指本次错误被防线拦截并恢复，不指模型不再越序。",
+      "fix": "保留前置校验，不把搜索结果等同读证据成功；搜索契约显式evidence_required_before_plan。",
+      "fix_layer": "既有工具权限/前置条件防线；补工具输出说明",
+      "why": "不能为节约调用而放开无证据写入。",
+      "verification": "历史同次运行已恢复；本轮确定性回归检查拒绝写入且不改变状态。",
+      "regression": "邻近L02继续验证证据读取条件，不能因终止改动放行越序。",
+      "risk": "模型越序行为仍可能复发；防线已验证≠模型路由已优化。",
+      "versions": "live-improved：越序被拦截→同次恢复（防线已验证）",
+      "refs": [
+        {
+          "artifact": "browser-live-runs",
+          "run_id": "d140fc3df5c3405c903d98428c784b12",
+          "started_at": "2026-09-08T15:31:57.283117+00:00",
+          "mode": "live",
+          "prompt_version": "live-improved",
+          "sha256": "398b7361e4ff1803625d3383d7ede2d0c52527ec8ae49c42a753e6b27727e636"
+        }
+      ]
+    },
+    {
+      "id": "BC-REMOVE",
+      "case_id": "L03 baseline第二轮",
+      "phenomenon": "预算修复已移除台灯，模型又删除一次",
+      "status": "待处理",
+      "layer": "任务状态更新副作用 → 工具结果理解",
+      "impact": "多一次错误恢复；最终方案正确，但浪费请求。",
+      "input": "预算从1000元降为200元，移除台灯保留键盘。",
+      "expected": "读取预算修复后的当前条目，避免删除已不存在的台灯。",
+      "actual": "update_constraints修复预算后已移除台灯，紧接update_item删除失败，再get_task恢复。",
+      "evidence": [
+        "60d4…同一工具批次：update_constraints(20000)，update_item(test-lamp1-o,remove=true)报‘条目不在当前方案’。",
+        "之后get_task显示仅test-kbd1-o；最终159元键盘，原案例通过。"
+      ],
+      "root_cause": "update_constraints有过滤和预算修复副作用，旧结果给removed名称与totals，却没有当前offer_id列表；模型也在同一批预先决定了依赖前一工具结果的删除。",
+      "confidence": "高：代码副作用与顺序匹配。中：单纯补返回字段不一定避免同批依赖调用。",
+      "cause_vs_trigger": "计算没有错；是状态副作用和依赖工具规划不匹配。",
+      "fix": "回传current_items的报价ID/数量/必要性，并注明修复已执行；候选提示要求依赖修改读取前一步结果。保持不存在条目报错，不把错误改成成功。",
+      "fix_layer": "工具状态返回与依赖调用说明",
+      "why": "静默幂等删除会掩盖模型对状态的误判。",
+      "verification": "确定性测试验证降预算后返回的ID列表不含台灯，后续错误不破坏键盘；真实复测由L03覆盖。",
+      "regression": "目标L03第二轮关注错误事件是否消失，既有最终条目断言保留。",
+      "risk": "同一批依赖工具仍可能冲突；不声称补字段后已消失。",
+      "versions": "baseline最终通过但有错误事件；新契约待真实复测",
+      "refs": [
+        {
+          "artifact": "live-eval-1788879902459415200",
+          "run_id": "60d4a28887574000a767dd20b7f7f8dd",
+          "started_at": "2026-09-08T15:05:40.072977+00:00",
+          "mode": "live",
+          "prompt_version": "live-baseline",
+          "sha256": "638e32fdec4576ddfecadb08ef22ab3b0714840e02b90402e06dabf8fb7dd2d6"
+        }
+      ]
+    },
+    {
+      "id": "BC-L05-BUDGET",
+      "case_id": "L05首次运行",
+      "phenomenon": "批次剩余2次被当成该案例的每轮上限",
+      "status": "已修复",
+      "layer": "评测/运行基础设施",
+      "impact": "误读模型能力；资源不足与普通任务失败混在一起。",
+      "input": "只有USB-C、不知道笔记本型号，预算500元，扩展坞接屏能保证吗？",
+      "expected": "相同每轮5次条件；不足时整例不开始并单独标资源不足。",
+      "actual": "首批L05只得到2次请求，在读依据/更新约束后耗尽。补批5次条件下通过。",
+      "evidence": [
+        "f2fa…model_calls=2；evaluate_live原代码LLM_MAX_CALLS=min(5,remaining())。",
+        "bf66…补批5次，最终明确‘不能保证’，询问主机型号和显示器接口。"
+      ],
+      "root_cause": "评测器把剩余批次额度悄悄压缩为单案例条件，导致不可比。",
+      "confidence": "高：脚本分支和两份轨迹一致。不证明给更多额度必然通过所有任务。",
+      "cause_vs_trigger": "根因是调度条件变化，不是已证实的模型兼容判断错误。",
+      "fix": "开始案例前预留每轮5次×轮数；不足整例not_run/resource_limited，不发请求、不缩小条件。新报告记录evaluation_policy_version。",
+      "fix_layer": "评测调度，不改模型上限",
+      "why": "保留可比较实验条件，而不是删除失败报告或扩大所有模型请求上限。",
+      "verification": "确定性测试确认不足额度时agent.run不会被调用；历史首次失败不改，补跑单列不可当一次独立首测。",
+      "regression": "保留L05在新协议下复测，检查兼容性与追问边界。",
+      "risk": "保守预留可能留下未用额度；新调度策略须标明，历史2次与5次不是同条件。",
+      "versions": "首批资源不足失败→补批通过（条件不同）；调度缺陷代码已修复",
+      "refs": [
+        {
+          "artifact": "live-eval-1788879902459415200",
+          "run_id": "f2fa925daf774a57828515c7a39eb256",
+          "started_at": "2026-09-08T15:05:51.431968+00:00",
+          "mode": "live",
+          "prompt_version": "live-baseline",
+          "sha256": "638e32fdec4576ddfecadb08ef22ab3b0714840e02b90402e06dabf8fb7dd2d6"
+        },
+        {
+          "artifact": "live-eval-1788880951052046500",
+          "run_id": "bf66303d14394671994919178a4dfc23",
+          "started_at": "2026-09-08T15:22:31.069965+00:00",
+          "mode": "live",
+          "prompt_version": "live-baseline",
+          "sha256": "ce04d3f26765dfc4f8d855a3d772bd7c6a99bb81394f455df3b6f9cb0a136a87"
+        }
+      ]
+    },
+    {
+      "id": "BC-STATE",
+      "case_id": "L02改进版通过记录",
+      "phenomenon": "方案排除了已有物品，但任务约束没有保存",
+      "status": "仍失败",
+      "layer": "需求理解/工具参数 → 任务状态更新 → 评测漏检",
+      "impact": "结果状态不完整，后续可能重新推荐已排除商品。没有实际观察到再次推荐，风险不说成已发生。",
+      "input": "已有笔记本和鼠标，后续明确不用显示器。",
+      "expected": "owned与excluded保存在同一份任务状态，后续修改仍生效。",
+      "actual": "L02全部旧断言通过，但最终owned=[]、excluded=[]、constraints=[]。",
+      "evidence": [
+        "d854…update_constraints只写budget_minor=100000、recipient=self；第二轮没有补约束。",
+        "ae8a…最终items为键盘/台灯，owned/excluded/constraints均空。旧exclusions断言只验证当前items的品类。"
+      ],
+      "root_cause": "模型遗漏约束更新参数；评测只检查当前方案，没有检查多轮状态持续性。",
+      "confidence": "高：输入、参数、状态和断言代码均明确。",
+      "cause_vs_trigger": "当前推荐没有重复≠长期约束已记住；不是数据库把已写字段丢失。",
+      "fix": "本轮只补独立状态审计/检查清单，不用关键词规则替模型回填。候选Prompt提醒每次先同步明确约束；真实修复待验证。新检查不倒改旧passed。",
+      "fix_layer": "评测覆盖先补；模型状态参数遗漏仍待处理",
+      "why": "缺字段并不能靠金额计算或数据库修复解决，需检查模型是否实际调用了正确参数。",
+      "verification": "确定性审计复现旧通过记录的约束缺失；没有把此记录改成新的历史失败。",
+      "regression": "L02复测除旧断言外，单列owned包含笔记本/鼠标、excluded含显示器；新增口径与旧成绩不可整体直接比较。",
+      "risk": "Prompt提醒未必足够；真实复测后再决定是否引入结构化约束确认，不在本轮扩功能。",
+      "versions": "live-improved旧成绩通过，补充状态审计不通过；修复未验证",
+      "refs": [
+        {
+          "artifact": "live-eval-1788880562625025900",
+          "run_id": "d854b235164a441d8bacd78c72205ee6",
+          "started_at": "2026-09-08T15:16:02.645165+00:00",
+          "mode": "live",
+          "prompt_version": "live-improved",
+          "sha256": "bcad9ecc7aa2d052460a5ef0f0cc5c9dd4210bc5c7d95e9670d32f69cbbf1642"
+        },
+        {
+          "artifact": "live-eval-1788880562625025900",
+          "run_id": "ae8a625f5ef04af38ac8426cd885e4ef",
+          "started_at": "2026-09-08T15:16:06.330363+00:00",
+          "mode": "live",
+          "prompt_version": "live-improved",
+          "sha256": "bcad9ecc7aa2d052460a5ef0f0cc5c9dd4210bc5c7d95e9670d32f69cbbf1642"
+        }
+      ]
+    }
+  ],
+  "retest": {
+    "core_cases": [
+      "L03",
+      "L02",
+      "L05"
+    ],
+    "planned_request_caps": [
+      10,
+      10,
+      5
+    ],
+    "core_max_requests": 25,
+    "additional_optional": {
+      "unit_protocol": 3,
+      "subset_single_turn": 5
+    },
+    "total_with_optional": 33,
+    "estimate": "核心25次按原峰值上界≤4.95元；若含单位与子集共33次≤6.534元。按60,000字节输入/2,000输出上限估算，实际usage另计，不是账单。",
+    "authorization": "未授权本轮复测；原剩余5次也未使用。25是完整案例可启动的请求预留上限，不是保证成功所需最少实际次数。"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "id": "protocol-1788875017944705100",
+  "started_at": "2026-09-08T13:43:37.944733+00:00",
+  "model_calls": 2,
+  "model_ms": 175.08999999999997,
+  "model_events": [
+    {
+      "number": 1,
+      "started_at": "2026-09-08T13:43:37.960569+00:00",
+      "status": "failed",
+      "error": "外部接口失败（连接、超时或响应格式异常）",
+      "usage_unknown": true,
+      "ended_at": "2026-09-08T13:43:38.068743+00:00",
+      "ms": 108.21
+    },
+    {
+      "number": 2,
+      "started_at": "2026-09-08T13:43:38.090291+00:00",
+      "status": "failed",
+      "error": "外部接口失败（连接、超时或响应格式异常）",
+      "usage_unknown": true,
+      "ended_at": "2026-09-08T13:43:38.157139+00:00",
+      "ms": 66.88
+    }
+  ],
+  "usage_reports": [
+    null,
+    null
+  ],
+  "retries": [
+    {
+      "request": 1,
+      "reason": "外部接口失败（连接、超时或响应格式异常）",
+      "action": "重试模型请求"
+    }
+  ],
+  "mode": "live",
+  "provider": "deepseek",
+  "endpoint_host": "api.deepseek.com",
+  "api_protocol": "chat-completions/function-tools",
+  "thinking": "disabled",
+  "stream": false,
+  "status": "failed",
+  "error": "外部接口失败（连接、超时或响应格式异常）",
+  "ended_at": "2026-09-08T13:43:38.157175+00:00"
+}
