@@ -1,6 +1,45 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#C4511B"><title>ShopFlow · 采购工作台</title><link rel="stylesheet" href="/style.css"><script src="/maintenance-data.js" defer></script><script src="/maintenance.js" defer></script><script src="/app.js" defer></script></head>
-<body><header class="top"><a href="/" class="brand"><span class="brand-mark">S</span>ShopFlow<span class="brand-note">学习与办公采购助手</span></a><nav><a href="/" data-nav="/">采购工作台</a><a href="/runs" data-nav="/runs">运行记录</a><a href="/evaluation" data-nav="/evaluation">评测与迭代</a></nav><button class="avatar" data-action="preferences" aria-label="偏好与已有物品">我的偏好 ↗</button></header>
-<div id="modebar" class="modebar">正在连接已保存的工作台…</div><div id="notice" role="alert" class="notice" hidden></div>
-<div class="shell"><aside class="sidebar"><button class="new-task" data-action="new">＋ 新的采购任务</button><p class="eyebrow">我的采购清单</p><div id="history"></div><div class="side-bottom"><a href="/runs" data-nav="/runs">维护中心 →</a><small>任务自动保存在本机服务端<br>偏好仅在你明确保存后记录</small><a href="/lab" data-nav="/lab">测试实验室 ↗</a></div></aside><main id="main" aria-live="polite"><p class="loading">正在载入…</p></main></div>
-<dialog id="dialog"><div id="dialog-content"></div></dialog></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8fc">
+  <meta name="description" content="ShopFlow turns shopping goals into clear, source-backed plans.">
+  <title>ShopFlow</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='10' fill='%231b1b23'/%3E%3Cpath d='M9 11.5h14l-1.2 10H10.2z' fill='%23fff'/%3E%3Cpath d='M12 12V9.8a4 4 0 018 0V12' fill='none' stroke='%238fa2ff' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/maintenance-data.js" defer></script>
+  <script src="/maintenance.js" defer></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="app-frame">
+    <aside class="icon-rail" aria-label="Primary navigation">
+      <a class="rail-brand" href="/" aria-label="ShopFlow home">SF</a>
+      <nav class="rail-nav">
+        <a href="/" data-nav="/" aria-label="Workspace" data-tip="Workspace"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20h-6v-6h-4v6H4z"/></svg></a>
+        <a href="/runs" data-nav="/runs" aria-label="Activity" data-tip="Activity"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></svg></a>
+        <a href="/evaluation" data-nav="/evaluation" aria-label="Evaluation" data-tip="Evaluation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V9m7 10V5m7 14v-7M3 19h18"/></svg></a>
+      </nav>
+      <nav class="rail-nav rail-bottom">
+        <a href="/lab" data-nav="/lab" aria-label="Lab" data-tip="Lab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6m-5 0v5l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M8 15h8"/></svg></a>
+        <button data-action="preferences" aria-label="Preferences" data-tip="Preferences"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4 1A8 8 0 0 0 14.8 6L14.5 3h-5L9.2 6a8 8 0 0 0-1.7 1.1l-2.4-1-2 3.4L5.1 11a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.4-1A8 8 0 0 0 9.2 18l.3 3h5l.3-3a8 8 0 0 0 1.7-1.1l2.4 1 2-3.4-2-1.5a7 7 0 0 0 .1-1z"/></svg></button>
+      </nav>
+    </aside>
+
+    <aside class="task-drawer">
+      <div class="drawer-head"><a href="/" class="wordmark">ShopFlow</a><button class="new-task" data-action="new" aria-label="Create a new list">＋</button></div>
+      <p class="drawer-label">Your lists</p>
+      <div id="history" class="history"></div>
+      <div class="drawer-foot"><div id="modebar" class="modebar">Connecting…</div><small>Saved on this device</small></div>
+    </aside>
+
+    <section class="app-content">
+      <header class="topbar"><div class="topbar-route"><span class="route-dot"></span><span id="route-label">Workspace</span></div><button class="profile-button" data-action="preferences" aria-label="Open preferences">You</button></header>
+      <div id="notice" role="alert" class="notice" hidden></div>
+      <main id="main" aria-live="polite"><p class="loading">Loading…</p></main>
+    </section>
+  </div>
+  <dialog id="dialog"><div id="dialog-content"></div></dialog>
+</body>
+</html>

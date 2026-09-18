@@ -1,72 +1,583 @@
-const $=s=>document.querySelector(s);
-const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let boot,task=null,catalog={demo:[],real:[]},busy=false,cart=null,replaceId=null;
-const money=(v,c=task?.currency||"CNY")=>v===null?"未知":new Intl.NumberFormat("zh-CN",{style:"currency",currency:c}).format(v/100);
-const kinds={fixture:"测试样品",verified:"已核实资料",external:"实时搜索",shopify_test:"测试店铺 · 不履约"};
-function notice(text){$("#notice").textContent=text;$("#notice").hidden=false;setTimeout(()=>$("#notice").hidden=true,7000)}
-async function api(path,body){const r=await fetch(path,{method:body?"POST":"GET",headers:body?{"Content-Type":"application/json","X-CSRF-Token":boot.csrf}:{},body:body?JSON.stringify(body):undefined});const j=await r.json();if(!r.ok){const err=new Error(j.error||"请求失败");err.status=r.status;throw err}return j}
-function saveLocal(t){task=t;localStorage.setItem("task",t.id);const i=boot.tasks.findIndex(x=>x.id===t.id);if(i>=0)boot.tasks[i]=t;else boot.tasks.unshift(t)}
-function body(extra={}){if(!task)throw new Error("请先创建采购任务");return {task_id:task.id,revision:task.revision,...extra}}
-async function create(scope="real",currency="CNY"){saveLocal(await api("/api/tasks",{scope,currency}));cart=null;render()}
-function historyList(){return boot.tasks.length?boot.tasks.map(t=>'<button class="history-item '+(task?.id===t.id?"selected":"")+'" data-action="history" data-id="'+esc(t.id)+'">'+esc(t.title)+'<small>'+esc(t.scope==="demo"?"演练资料":"真实资料")+' · '+esc(t.status)+'</small></button>').join(""):'<p class="muted">从一件想买的东西开始</p>'}
-function image(s){return s.product.image?'<div class="product-image"><img src="'+esc(s.product.image)+'" alt="'+esc(s.product.name)+'" loading="lazy"></div>':'<div class="product-image">'+esc(s.product.category)+'<small>暂无实物图</small></div>'}
-function product(i){const s=i.snapshot,o=s.offer,p=s.product;return '<article class="product"><div class="product-top">'+image(s)+'<div class="product-info"><h3>'+esc(p.name)+'</h3><p class="spec">'+esc(s.variant.spec)+'</p><span class="badge">'+(i.required?"必要":"可选")+'</span> <span class="badge amber">'+kinds[p.kind]+'</span></div><div class="price">'+money(o.price_minor,o.currency)+'</div></div><p class="reason">建议 · '+esc(i.reason)+'</p><details><summary>规格、来源与待核实事项</summary><p>客观资料：'+esc(Object.entries(p.attributes).map(([k,v])=>v).join(" · "))+'</p><p>商家：'+esc(o.merchant)+' · SKU '+esc(s.variant.sku)+'</p><p>价格性质：'+esc(o.price_kind==="fixture"?"固定测试报价，非市场价格":o.price_kind==="unknown"?"未知，未取得可用售价":"采集报价")+' · '+esc(o.captured_at.slice(0,10))+'</p><p>库存：'+esc(o.stock==="unknown"?"未知":o.stock==="out"?"缺货":"采集时有货，非保证")+'；运费：'+money(o.shipping_minor,o.currency)+'</p><p>'+esc(o.conditions)+'</p>'+p.evidence.map(x=>'<p>'+(x.url?'<a href="'+esc(x.url)+'" target="_blank" rel="noopener">查看官方依据 ↗</a>':'固定测试夹具')+' · '+esc(x.excerpt)+'</p>').join("")+'<p>'+esc(p.limitations.join("；"))+'</p></details><div class="card-actions"><div class="qty"><button data-action="quantity" data-id="'+esc(i.offer_id)+'" data-delta="-1" aria-label="减少 '+esc(p.name)+' 数量">−</button><span>'+i.quantity+'</span><button data-action="quantity" data-id="'+esc(i.offer_id)+'" data-delta="1" aria-label="增加 '+esc(p.name)+' 数量">＋</button></div><button data-action="replace" data-id="'+esc(i.offer_id)+'">替换</button><button data-action="priority" data-id="'+esc(i.offer_id)+'">'+(i.required?"设为可选":"设为必要")+'</button><button class="remove" data-action="remove" data-id="'+esc(i.offer_id)+'">移除</button></div></article>'}
-function plan(){const items=task?.items||[],tt=task?.totals;return '<section class="plan"><div class="plan-head"><div><h3>你的采购方案</h3><small>'+(items.length?items.length+' 项商品 · 修订 '+task.revision:'尚未添加商品')+'</small></div><span class="badge">'+(task?.confirmation?"已确认":items.length?"待你确认":"待添加")+'</span></div>'+
-(items.length?'<div class="budget"><form id="budget-form" class="budget-row"><label for="budget">本次预算 · '+esc(task.currency||"CNY")+'</label><div><input id="budget" aria-label="本次预算" type="number" min="0" max="1000000" step=".01" value="'+(task.budget_minor===null?"":task.budget_minor/100)+'" placeholder="未设置"><button type="submit">更新</button></div></form></div>'+items.map(product).join(""):'<div class="plan-empty"><span class="empty-glyph">＋</span><h3>采购方案</h3><p>添加商品后查看依据与费用。</p><div class="empty-steps"><span>01 理解需要</span><span>·</span><span>02 比较取舍</span><span>·</span><span>03 确认清单</span></div></div>')+
-'<div class="plan-bottom">'+(items.length?'<div class="total-row"><span>已知费用小计</span><strong>'+money(tt.known_total_minor,tt.currency)+'</strong></div><div class="status-line">'+(tt.remaining_minor!==null?'预算余额 '+money(tt.remaining_minor,tt.currency)+'（未扣未知费用）':'预算未设置')+'</div>'+(tt.unknown.length?'<div class="unknown">运费或售价等仍待核实，不能保证最终费用在预算内。<details><summary>查看 '+tt.unknown.length+' 项限制</summary>'+tt.unknown.map(x=>esc(x)).join("<br>")+'</details></div>':"")+(task.compatibility.length?'<details class="compat"><summary>兼容性与资料限制 · '+task.compatibility.length+' 项</summary>'+task.compatibility.map(esc).join("<br>")+'</details>':""):'')+
-'<button class="primary wide" data-action="'+(task?.confirmation?"checkout":"confirm")+'" '+(!items.length||busy?"disabled":"")+'>'+(task?.confirmation?"创建购买入口 →":"核对并确认方案 →")+'</button><div class="secondary-row"><button data-action="catalog">'+(task?.scope==="real"?"如何搜索商品":"浏览演练商品")+'</button>'+(items.length?'<button data-action="refresh">刷新报价</button>':"")+'</div><p>确认前不创建购物车。点击购买入口不代表成交。'+(task?.scope==="real"?"商品按商家分别处理。":"本地演练不付款、不销售、不履约。")+'</p>'+(task?'<p>'+esc(task.status)+'</p>':"")+'</div></section>'}
-function workspace(){return '<div class="workspace"><div class="workspace-head"><div><h2>'+(task&&task.title!=="新的采购任务"?esc(task.title):"采购工作台")+'</h2><p></p></div><div class="scope-control"><button class="compact-new" data-action="new">＋ 新任务</button><select id="scope" aria-label="商品资料范围"><option value="demo" '+(task?.scope==="demo"?"selected":"")+'>演练资料 · '+catalog.demo.length+' 个样品</option><option value="real" '+((!task||task.scope==="real")?"selected":"")+'>正式模式 · 外部实时搜索</option></select><select id="currency" aria-label="方案币种"><option value="CNY">人民币 CNY</option><option value="GBP" '+(task?.currency==="GBP"?"selected":"")+'>英镑 GBP</option></select></div></div><div class="columns"><section class="conversation">'+
-(task?.messages.length?'<div class="messages">'+task.messages.map(m=>'<div class="bubble '+(m.role==="user"?"user":"")+'"><span class="bubble-label">'+(m.role==="user"?"你":"ShopFlow")+'</span>'+esc(m.content)+'</div>').join("")+(busy?'<p class="status-line">正在检索资料、检查约束，请稍候…</p>':"")+'</div>':'<div class="welcome"><h1>今天想买什么？</h1><p>告诉我用途、预算和已有物品。</p><div class="examples"><button class="example" data-action="example" data-text="预算 1000 元改善学习桌面，我已经有笔记本和鼠标。"><span>01</span><div><strong>改善学习桌面</strong><small>预算 1000 元，已经有笔记本和鼠标</small></div></button></div><div class="conversation-foot"><span>有依据的选择</span><span>可调整的方案</span><span>你来确认购买</span></div></div>')+
-'<form class="composer" id="chat-form"><textarea id="message" aria-label="你的采购需求" placeholder="想买什么，或想改善什么？也可以直接说预算和已有物品…" maxlength="2000" '+(busy?"disabled":"")+'></textarea><div class="composer-row"><small>'+((!task||task.scope==="real")?"外部实时搜索 · 价格与库存以来源页面为准":"离线演练 · 测试报价与真实资料分开")+'</small><button class="primary send" type="submit" '+(busy?"disabled":"")+'>'+(busy?"正在整理…":"发送 ↑")+'</button></div></form></section>'+plan()+'</div></div>'}
-function render(){if(!boot)return;$("#modebar").innerHTML='<details><summary>'+ (boot.mode==="offline"?"规则演练":!boot.integrations.model_configured?"模型未配置":boot.integrations.search_configured?"真实模型 · 实时搜索":"实时搜索未配置")+'</summary><span>'+(boot.mode==="offline"?"规则演练，未连接模型；测试商品不支持真实购买":boot.integrations.search_configured?"正式模式通过外部 Search Provider 检索商品":"请在服务端 .env 配置 SEARCH_API_KEY")+'</span></details>';
-document.querySelector('.top a[data-nav="/"]').textContent=document.body.classList.contains("maintenance")?"返回采购工作台":"采购工作台";$("#history").innerHTML=historyList();document.querySelectorAll("[data-nav]").forEach(a=>a.classList.toggle("active",a.dataset.nav===location.pathname));
-if(location.pathname==="/"){$("#main").innerHTML=workspace();const msgs=$(".messages");if(msgs)msgs.scrollTop=msgs.scrollHeight}
-}
-function modal(title,content,actions=""){const d=$("#dialog");$("#dialog-content").innerHTML='<div class="dialog-head"><h2>'+esc(title)+'</h2><button class="close" data-action="close" aria-label="关闭">×</button></div><div class="dialog-body">'+content+'</div>'+(actions?'<div class="dialog-actions">'+actions+'</div>':"");if(!d.open)d.showModal()}
-function close(){$("#dialog").close()}
-async function send(text,fault){if(busy)return;if(!text.trim())return;busy=true;try{if(!task)await create($("#scope")?.value||"real",$("#currency")?.value||"CNY");render();saveLocal(await api(fault?"/api/lab/chat":"/api/chat",body({text,fault})));cart=null}catch(e){notice(e.message);if(task)saveLocal(await api("/api/task/"+task.id))}finally{busy=false;render()}}
-const lines=()=>task.items.map(({offer_id,quantity,required,reason})=>({offer_id,quantity,required,reason}));
-async function editItems(items){saveLocal(await api("/api/edit",body({action:"plan",items})));cart=null;render()}
-async function catalogue(id){if(!task)await create();replaceId=id||null;if(task.scope==="real"){modal("实时搜索商品",'<p>请在对话中描述用途、预算和关键规格，ShopFlow 会生成查询词并调用外部搜索。需要替换时，直接说明想调整的规格或价位。</p>');return}const old=task.items.find(x=>x.offer_id===id);const rows=catalog[task.scope].filter(s=>(!old||s.product.category===old.snapshot.product.category)&&s.offer.id!==id);
-modal(id?"比较并替换商品":"已收录的商品",'<p>搜索范围：'+(task.scope==="demo"?"独立的测试样品集，价格不是市场报价。":"经人工核实的官方资料；并非实时库存或全网搜索。")+' 当前按 '+esc(task.currency||"CNY")+' 规划，不混合币种。</p><div class="catalog-grid">'+rows.map(s=>'<article class="catalog-card">'+image(s)+'<h3>'+esc(s.product.name)+'</h3><p>'+esc(s.variant.spec)+'</p><p>'+esc(Object.values(s.product.attributes).join(" · "))+'</p><span class="badge">'+kinds[s.product.kind]+'</span><strong>'+money(s.offer.price_minor,s.offer.currency)+'</strong><p>'+esc(s.offer.conditions)+'</p>'+s.product.evidence.filter(e=>e.url).map(e=>'<a target="_blank" rel="noopener" href="'+esc(e.url)+'">资料来源 ↗</a>').join("")+'<button data-action="add" data-id="'+esc(s.offer.id)+'" '+(s.offer.currency!==(task.currency||"CNY")?"disabled":"")+'>'+(s.offer.currency!==(task.currency||"CNY")?"币种不同，请新建对应币种任务":replaceId?"替换为这一项":"加入方案")+'</button></article>').join("")+'</div>')}
-function confirmPanel(){modal("核对这份采购方案",'<p>请核对商家、规格、数量与费用。'+(task.scope==="demo"?"这是本地演练；不会发生付款或发货。":"购买入口按商家分别创建；你仍需在商家页面核对并付款。")+'</p>'+task.items.map(i=>'<div class="confirm-line"><strong>'+esc(i.snapshot.product.name)+'</strong>'+esc(i.snapshot.offer.merchant)+' · '+esc(i.snapshot.variant.spec)+'<br>SKU '+esc(i.snapshot.variant.sku)+' · 数量 '+i.quantity+' · '+i.snapshot.offer.currency+' · 单价 '+money(i.snapshot.offer.price_minor,i.snapshot.offer.currency)+'</div>').join("")+'<p>已知费用：'+money(task.totals.known_total_minor,task.totals.currency)+'<br>运费：'+(task.totals.unknown.some(x=>x.includes("运费"))?"未知，未按 0 元计算":money(task.totals.shipping_known_minor))+'<br>'+esc(task.compatibility.join("；"))+'</p><label class="check-label"><input id="ack" type="checkbox">我已核对商品、规格与数量，知悉未知费用、兼容性限制及测试性质，确认当前版本。</label>','<button data-action="close">继续调整</button><button class="primary" data-action="do-confirm">确认当前方案</button>')}
-function showEntries(c){cart=c;modal("购买入口已准备",'<p>方案修订 '+c.revision+'。你仍需自行核对；打开入口只记录跳转，不代表付款。</p>'+c.entries.map((e,i)=>'<div class="entry"><strong>'+esc(e.merchant)+'</strong><small>'+esc(e.kind==="local_demo"?"本地模拟结算，不是 Shopify，不生成真实订单":e.kind==="shopify_test"?"真实测试店铺 · 不履约":e.kind==="external"?"外部商家 · 单独购买":"只有资料，未取得购买链接")+'</small>'+(e.url?'<button class="primary" data-action="jump" data-index="'+i+'">'+esc(e.label)+' ↗</button>':esc(e.label))+'</div>').join("")+'<p>没有可信订单回传，因此不能标记真实付款成功。</p>','<button data-action="close">关闭</button><button data-action="mark">我已自行购买（用户标记）</button>')}
-async function route(path,push=true){if(push)history.pushState({}, "",path);document.body.classList.toggle("maintenance",/^\/(runs|evaluation)(\/|$)/.test(path));document.title="ShopFlow · "+(path.startsWith("/runs")?"运行记录":path.startsWith("/evaluation")?"评测与迭代":"采购工作台");render();if(path==="/")return;$("#main").innerHTML='<p class="loading">正在载入…</p>';
-try{
-if(path==="/runs"||path.startsWith("/runs/")||path==="/evaluation"||path.startsWith("/evaluation/")){await MaintenanceUI.route(path)}
-else if(path==="/lab"){$("#main").innerHTML='<div class="page"><h1>测试实验室</h1><p>独立测试入口。只作用于当前任务，不修改普通购物页面的默认行为。</p><section class="panel"><h3>依赖故障注入</h3><p>'+(!boot.test_lab?"尚未启用。服务器设置 ENABLE_TEST_LAB=1 后重启即可进行本地测试。":"已启用本地测试实验室。检索或模型失败会保留原方案；结算失败不会伪造成功。")+'</p><p>当前任务：'+esc(task?.title||"尚未创建")+'</p><div class="toolbar"><button data-action="fault-search" '+(!boot.test_lab||!task?"disabled":"")+'>注入一次检索超时</button><button data-action="fault-model" '+(!boot.test_lab||!task?"disabled":"")+'>注入一次模型故障</button><button data-action="fault-checkout" '+(!boot.test_lab||!task?.confirmation?"disabled":"")+'>注入一次结算故障</button></div></section></div>'}
-else if(path.startsWith("/checkout/")){const c=await api("/api/cart/"+path.split("/").pop());const d=c.body;$("#main").innerHTML='<div class="page checkout-summary"><span class="pill">本地演练 · 不销售 · 不履约</span><h1>本地结算演练</h1><p>这是本地模拟结算页，不是外部店铺或支付网关。不输入银行卡信息，不产生真实订单。</p><div class="panel">'+(d.snapshot?.items||[]).map(i=>'<div class="confirm-line"><strong>'+esc(i.snapshot.product.name)+'</strong>'+esc(i.snapshot.variant.spec)+' × '+i.quantity+'<br>'+money(i.snapshot.offer.price_minor,i.snapshot.offer.currency)+'</div>').join("")+'<p>已知费用 '+money(d.snapshot?.totals.known_total_minor,d.snapshot?.currency||"CNY")+'，运费未知。</p><p>'+esc(d.status)+'</p><button class="primary wide" data-action="finish-demo" data-id="'+esc(c.id)+'">完成演练（不付款）</button></div><a href="/" data-nav="/">← 返回采购工作台</a></div>'}
-else if(path==="/preferences"){history.replaceState({},"","/");render();preferences()}
-}catch(e){$("#main").innerHTML='<div class="page"><h2>暂时无法读取</h2><p>'+esc(e.message)+'</p><a href="/" data-nav="/">返回工作台</a></div>'}
-}
-function preferences(){const p=boot.preferences;modal("偏好与已有物品",'<p>仅在点击保存时记录，用于给自己采购。赠礼任务不会使用这些偏好。单次预算不会存入长期偏好。</p><label>已有物品（用逗号分隔品类）<input id="owned" type="text" value="'+esc(p.owned.join("，"))+'" placeholder="鼠标，显示器"></label><label>使用偏好<textarea id="pref-text" rows="4" placeholder="例如：偏好低噪声、桌面空间有限">'+esc(p.text)+'</textarea></label><p>来源：用户明确保存 · 最近更新 '+esc(p.updated||"尚未保存")+'<br>修改适用于之后的新任务；当前任务的已有物品可通过对话调整。</p>','<button data-action="close">取消</button><button class="primary" data-action="save-preferences">保存偏好</button>')}
-document.addEventListener("click",async ev=>{const nav=ev.target.closest("[data-nav]");if(nav){ev.preventDefault();return route(nav.dataset.nav)}const el=ev.target.closest("[data-action]");if(!el||el.disabled)return;const a=el.dataset.action;try{
-if(a==="close")close();
-else if(a==="new"){await create();await route("/")}
-else if(a==="history"){saveLocal(await api("/api/task/"+el.dataset.id));cart=null;await route("/")}
-else if(a==="example")await send(el.dataset.text);
-else if(a==="preferences")preferences();
-else if(a==="save-preferences"){boot.preferences=await api("/api/preferences",{owned:$("#owned").value.split(/[，,、]/).map(x=>x.trim()).filter(Boolean),text:$("#pref-text").value});close();notice("偏好已保存，你可以随时修改")}
-else if(a==="catalog"||a==="replace")await catalogue(a==="replace"?el.dataset.id:null);
-else if(a==="add"){const arr=lines();if(replaceId){const item=arr.find(i=>i.offer_id===replaceId);item.offer_id=el.dataset.id;item.reason="用户比较后替换，需核实规格与兼容性"}else{if(arr.some(i=>i.offer_id===el.dataset.id))throw new Error("已在方案中，请直接调整数量");arr.push({offer_id:el.dataset.id,quantity:1,required:true,reason:"用户主动选择，资料与限制见下方"})}await editItems(arr);close()}
-else if(a==="remove")await editItems(lines().filter(i=>i.offer_id!==el.dataset.id));
-else if(a==="priority"){const arr=lines();const i=arr.find(i=>i.offer_id===el.dataset.id);i.required=!i.required;await editItems(arr)}
-else if(a==="quantity"){const arr=lines();const i=arr.find(i=>i.offer_id===el.dataset.id);i.quantity+=Number(el.dataset.delta);if(i.quantity<1)throw new Error("至少 1 件；不需要时可移除");await editItems(arr)}
-else if(a==="refresh"){saveLocal(await api("/api/edit",body({action:"refresh"})));cart=null;render();notice("已重新校验任务缓存中的商品资料；如需新结果请在对话中再次搜索")}
-else if(a==="confirm")confirmPanel();
-else if(a==="do-confirm"){if(!$("#ack").checked)throw new Error("请先勾选并确认费用与测试说明");el.disabled=true;saveLocal(await api("/api/confirm",body({acknowledge_unknown:true})));close();render();notice("当前方案已确认，可以创建购买入口")}
-else if(a==="checkout"){el.disabled=true;showEntries(await api("/api/checkout",body()))}
-else if(a==="jump"){const r=await api("/api/jump",{cart_id:cart.id,index:Number(el.dataset.index)});if(r.url.startsWith("/")){close();await route(r.url)}else{const link=document.createElement("a");link.href=r.url;link.target="_blank";link.rel="noopener";link.click();notice(r.status)}}
-else if(a==="mark"){saveLocal(await api("/api/mark-purchased",body({explicit:true})));close();render()}
-else if(a==="finish-demo"){await api("/api/demo-finish",{cart_id:el.dataset.id});await route(location.pathname,false)}
-else if(a==="fault-search"||a==="fault-model"){await send("想买一个 300 元内的键盘",a==="fault-search"?"search":"model");await route("/runs")}
-else if(a==="fault-checkout"){await api("/api/lab/checkout",body());notice("结算测试结束")}
-}catch(e){notice(e.message);if(el.isConnected)el.disabled=false;if(e.status===409&&task){saveLocal(await api("/api/task/"+task.id));render()}}});
-document.addEventListener("submit",async ev=>{ev.preventDefault();try{if(ev.target.id==="chat-form")await send($("#message").value);else if(ev.target.id==="budget-form"){const val=$("#budget").value;if(val==="")throw new Error("请输入预算");saveLocal(await api("/api/edit",body({action:"budget",budget_minor:Math.round(Number(val)*100)})));cart=null;render()}}catch(e){notice(e.message)}});
-document.addEventListener("change",async ev=>{if(["scope","currency"].includes(ev.target.id)){try{let scope=$("#scope").value,cur=$("#currency").value;if(scope==="demo")cur="CNY";await create(scope,cur)}catch(e){notice(e.message)}}});
-document.addEventListener("keydown",ev=>{if(ev.target.id==="message"&&ev.key==="Enter"&&(ev.ctrlKey||ev.metaKey)){ev.preventDefault();send(ev.target.value)}});
-addEventListener("popstate",()=>route(location.pathname,false));
-(async()=>{try{boot=await api("/api/bootstrap");catalog=await api("/api/catalog");task=boot.tasks.find(t=>t.id===localStorage.getItem("task"))||boot.tasks[0]||null;render();await route(location.pathname,false)}catch(e){$("#main").innerHTML='<div class="page"><h2>未能连接服务</h2><p>'+esc(e.message)+'</p><p>请确认服务已启动，然后刷新页面。</p></div>'}})();
+const $ = selector => document.querySelector(selector);
+const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({
+  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+}[char]));
 
-// Source images may fail independently of verified product text.
-document.addEventListener("error",e=>{if(e.target.tagName==="IMG"&&e.target.closest(".product-image")){const box=e.target.closest(".product-image");box.textContent="图片暂不可用";}},true);
+let boot;
+let task = null;
+let catalog = {demo: [], real: []};
+let busy = false;
+let cart = null;
+let replaceId = null;
+
+const statusLabels = {
+  "新的采购任务": "New list",
+  "规划中": "Planning",
+  "待确认": "Ready to review",
+  "已确认，尚未购买": "Confirmed",
+  "已准备购买入口": "Links ready",
+  "用户标记已购买": "Marked purchased",
+  "已完成演练": "Demo complete"
+};
+const kindLabels = {
+  fixture: "Demo item",
+  verified: "Verified",
+  external: "Web result",
+  shopify_test: "Test store"
+};
+const money = (value, currency = task?.currency || "CNY") =>
+  value === null || value === undefined
+    ? "Unknown"
+    : new Intl.NumberFormat("en-US", {style: "currency", currency}).format(value / 100);
+const labelStatus = value => statusLabels[value] || value || "Not recorded";
+
+function notice(message) {
+  $("#notice").textContent = message;
+  $("#notice").hidden = false;
+  setTimeout(() => $("#notice").hidden = true, 7000);
+}
+
+async function api(path, payload) {
+  const response = await fetch(path, {
+    method: payload ? "POST" : "GET",
+    headers: payload ? {"Content-Type": "application/json", "X-CSRF-Token": boot.csrf} : {},
+    body: payload ? JSON.stringify(payload) : undefined
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    const error = new Error(data.error || "The request could not be completed.");
+    error.status = response.status;
+    throw error;
+  }
+  return data;
+}
+
+function saveLocal(nextTask) {
+  task = nextTask;
+  localStorage.setItem("task", nextTask.id);
+  const index = boot.tasks.findIndex(item => item.id === nextTask.id);
+  if (index >= 0) boot.tasks[index] = nextTask;
+  else boot.tasks.unshift(nextTask);
+}
+
+function requestBody(extra = {}) {
+  if (!task) throw new Error("Create a list first.");
+  return {task_id: task.id, revision: task.revision, ...extra};
+}
+
+async function create(scope = "real", currency = "CNY") {
+  saveLocal(await api("/api/tasks", {scope, currency}));
+  cart = null;
+  render();
+}
+
+function historyList() {
+  if (!boot.tasks.length) return '<p class="muted">Your saved lists will appear here.</p>';
+  return boot.tasks.map(item =>
+    '<button class="history-item ' + (task?.id === item.id ? "selected" : "") +
+    '" data-action="history" data-id="' + esc(item.id) + '">' +
+    esc(item.title === "新的采购任务" ? "New list" : item.title) +
+    '<small>' + esc(item.scope === "demo" ? "Demo" : "Live") + ' · ' +
+    esc(labelStatus(item.status)) + '</small></button>'
+  ).join("");
+}
+
+function productImage(snapshot) {
+  const product = snapshot.product;
+  if (product.image) {
+    return '<div class="product-image"><img src="' + esc(product.image) + '" alt="' +
+      esc(product.name) + '" loading="lazy"></div>';
+  }
+  return '<div class="product-image">' + esc(product.category) + '<small>No image</small></div>';
+}
+
+function productCard(item) {
+  const snapshot = item.snapshot;
+  const offer = snapshot.offer;
+  const product = snapshot.product;
+  const attributes = Object.values(product.attributes || {}).join(" · ") || "No specifications recorded";
+  const evidence = (product.evidence || []).map(entry =>
+    '<p>' + (entry.url
+      ? '<a href="' + esc(entry.url) + '" target="_blank" rel="noopener">Source ↗</a>'
+      : '<span>Demo fixture</span>') + ' · ' + esc(entry.excerpt) + '</p>'
+  ).join("");
+  const priceType = offer.price_kind === "fixture" ? "Demo price" :
+    offer.price_kind === "unknown" ? "Price unavailable" : "Captured price";
+  const stock = offer.stock === "unknown" ? "Unknown" :
+    offer.stock === "out" ? "Out of stock" : "Available when captured";
+
+  return '<article class="product"><div class="product-top">' + productImage(snapshot) +
+    '<div class="product-info"><h3>' + esc(product.name) + '</h3><p class="spec">' +
+    esc(snapshot.variant.spec) + '</p><span class="badge">' +
+    (item.required ? "Required" : "Optional") + '</span> <span class="badge amber">' +
+    esc(kindLabels[product.kind] || product.kind) + '</span></div><div class="price">' +
+    money(offer.price_minor, offer.currency) + '</div></div><p class="reason">' +
+    esc(item.reason) + '</p><details><summary>Details and sources</summary><p>' +
+    esc(attributes) + '</p><p>' + esc(offer.merchant) + ' · SKU ' +
+    esc(snapshot.variant.sku) + '</p><p>' + esc(priceType) + ' · ' +
+    esc((offer.captured_at || "").slice(0, 10) || "Date unknown") + '</p><p>Stock: ' +
+    esc(stock) + ' · Shipping: ' + money(offer.shipping_minor, offer.currency) +
+    '</p><p>' + esc(offer.conditions || "") + '</p>' + evidence + '<p>' +
+    esc((product.limitations || []).join(" · ")) + '</p></details><div class="card-actions">' +
+    '<div class="qty"><button data-action="quantity" data-id="' + esc(item.offer_id) +
+    '" data-delta="-1" aria-label="Decrease ' + esc(product.name) + '">−</button><span>' +
+    item.quantity + '</span><button data-action="quantity" data-id="' + esc(item.offer_id) +
+    '" data-delta="1" aria-label="Increase ' + esc(product.name) + '">＋</button></div>' +
+    '<button data-action="replace" data-id="' + esc(item.offer_id) + '">Replace</button>' +
+    '<button data-action="priority" data-id="' + esc(item.offer_id) + '">' +
+    (item.required ? "Make optional" : "Make required") + '</button>' +
+    '<button class="remove" data-action="remove" data-id="' + esc(item.offer_id) +
+    '">Remove</button></div></article>';
+}
+
+function planPanel() {
+  const items = task?.items || [];
+  const totals = task?.totals;
+  const headerState = task?.confirmation ? "Confirmed" : items.length ? "Review" : "Empty";
+  const itemContent = items.length
+    ? '<div class="budget"><form id="budget-form" class="budget-row"><label for="budget">Budget · ' +
+      esc(task.currency || "CNY") + '</label><div><input id="budget" aria-label="Budget" type="number" ' +
+      'min="0" max="1000000" step=".01" value="' +
+      (task.budget_minor === null ? "" : task.budget_minor / 100) +
+      '" placeholder="Not set"><button type="submit">Update</button></div></form></div>' +
+      items.map(productCard).join("")
+    : '<div class="plan-empty"><span class="empty-glyph">＋</span><h3>Your plan</h3>' +
+      '<p>Recommendations will collect here.</p><div class="empty-steps">' +
+      '<span>Search</span><span>·</span><span>Compare</span><span>·</span><span>Confirm</span></div></div>';
+
+  let totalsContent = "";
+  if (items.length) {
+    totalsContent = '<div class="total-row"><span>Known total</span><strong>' +
+      money(totals.known_total_minor, totals.currency) + '</strong></div><div class="status-line">' +
+      (totals.remaining_minor !== null
+        ? money(totals.remaining_minor, totals.currency) + " remaining"
+        : "No budget set") + '</div>';
+    if (totals.unknown.length) {
+      totalsContent += '<div class="unknown">Some costs are still unknown.<details><summary>' +
+        totals.unknown.length + ' notes</summary>' +
+        totals.unknown.map(entry => esc(entry)).join("<br>") + '</details></div>';
+    }
+    if ((task.compatibility || []).length) {
+      totalsContent += '<details class="compat"><summary>Compatibility · ' +
+        task.compatibility.length + '</summary>' +
+        task.compatibility.map(entry => esc(entry)).join("<br>") + '</details>';
+    }
+  }
+
+  return '<section class="plan"><div class="plan-head"><div><h3>Shopping plan</h3><small>' +
+    (items.length ? items.length + ' item' + (items.length === 1 ? "" : "s") +
+      ' · Revision ' + task.revision : "Nothing added yet") +
+    '</small></div><span class="badge">' + headerState + '</span></div>' + itemContent +
+    '<div class="plan-bottom">' + totalsContent +
+    '<button class="primary wide" data-action="' + (task?.confirmation ? "checkout" : "confirm") +
+    '" ' + (!items.length || busy ? "disabled" : "") + '>' +
+    (task?.confirmation ? "Open purchase options →" : "Review and confirm →") + '</button>' +
+    '<div class="secondary-row"><button data-action="catalog">' +
+    (task?.scope === "demo" ? "Browse demo items" : "Search tips") + '</button>' +
+    (items.length ? '<button data-action="refresh">Refresh</button>' : "") +
+    '</div>' + (task ? '<p>' + esc(labelStatus(task.status)) + '</p>' : "") + '</div></section>';
+}
+
+function conversationContent() {
+  if (task?.messages.length) {
+    return '<div class="messages">' + task.messages.map(message =>
+      '<div class="bubble ' + (message.role === "user" ? "user" : "") +
+      '"><span class="bubble-label">' + (message.role === "user" ? "You" : "ShopFlow") +
+      '</span>' + esc(message.content) + '</div>'
+    ).join("") + (busy ? '<p class="status-line">Working on your request…</p>' : "") + '</div>';
+  }
+  return '<div class="welcome"><img class="companion-icon" src="/shopflow-companion.svg" alt="">' +
+    '<h1>What are we finding today?</h1><p>Share what you need, your budget, and what you already own.</p>' +
+    '<div class="examples"><button class="example" data-action="example" ' +
+    'data-text="I have a budget of CNY 1,000 to improve my study desk. I already own a laptop and mouse.">' +
+    '<span>→</span><div><strong>Upgrade my study setup</strong>' +
+    '<small>CNY 1,000 · Laptop and mouse already covered</small></div></button></div>' +
+    '<div class="conversation-foot"><span>Source-backed picks</span><span>Easy edits</span>' +
+    '<span>You approve the final plan</span></div></div>';
+}
+
+function workspace() {
+  const title = task && task.title !== "新的采购任务" ? task.title : "New shopping list";
+  return '<div class="workspace"><div class="workspace-head"><div><h2>' + esc(title) +
+    '</h2></div><div class="scope-control"><button class="compact-new" data-action="new">＋ New</button>' +
+    '<select id="scope" aria-label="Shopping mode"><option value="real" ' +
+    ((!task || task.scope === "real") ? "selected" : "") + '>Live</option><option value="demo" ' +
+    (task?.scope === "demo" ? "selected" : "") + '>Demo</option></select>' +
+    '<select id="currency" aria-label="Currency"><option value="CNY">CNY</option>' +
+    '<option value="GBP" ' + (task?.currency === "GBP" ? "selected" : "") + '>GBP</option></select></div></div>' +
+    '<div class="columns"><section class="conversation">' + conversationContent() +
+    '<form class="composer" id="chat-form"><textarea id="message" aria-label="Shopping request" ' +
+    'placeholder="Ask ShopFlow…" maxlength="2000" ' + (busy ? "disabled" : "") +
+    '></textarea><div class="composer-row"><small>' +
+    ((!task || task.scope === "real") ? "Live" : "Demo") +
+    '</small><button class="primary send" type="submit" aria-label="Send" ' +
+    (busy ? "disabled" : "") + '></button></div></form></section>' + planPanel() + '</div></div>';
+}
+
+function modeSummary() {
+  if (boot.mode === "offline") return ["Demo", "Rules"];
+  if (!boot.integrations.model_configured) return ["Setup needed", "Model"];
+  if (!boot.integrations.search_configured) return ["Setup needed", "Search"];
+  return ["Live", "Ready"];
+}
+
+function setRouteLabel() {
+  const label = location.pathname.startsWith("/runs") ? "Activity" :
+    location.pathname.startsWith("/evaluation") ? "Evaluation" :
+    location.pathname === "/lab" ? "Lab" : "Workspace";
+  $("#route-label").textContent = label;
+}
+
+function render() {
+  if (!boot) return;
+  const mode = modeSummary();
+  $("#modebar").innerHTML = '<span class="mode-dot"></span><strong>' + mode[0] +
+    '</strong><small>' + mode[1] + '</small>';
+  $("#history").innerHTML = historyList();
+  setRouteLabel();
+  document.querySelectorAll("[data-nav]").forEach(link =>
+    link.classList.toggle("active",
+      link.dataset.nav === "/" ? location.pathname === "/" : location.pathname.startsWith(link.dataset.nav))
+  );
+  if (location.pathname === "/") {
+    $("#main").innerHTML = workspace();
+    const messages = $(".messages");
+    if (messages) messages.scrollTop = messages.scrollHeight;
+  }
+}
+
+function modal(title, content, actions = "") {
+  const dialog = $("#dialog");
+  $("#dialog-content").innerHTML = '<div class="dialog-head"><h2>' + esc(title) +
+    '</h2><button class="close" data-action="close" aria-label="Close">×</button></div>' +
+    '<div class="dialog-body">' + content + '</div>' +
+    (actions ? '<div class="dialog-actions">' + actions + '</div>' : "");
+  if (!dialog.open) dialog.showModal();
+}
+function closeModal() { $("#dialog").close(); }
+
+async function send(message, fault) {
+  if (busy || !message.trim()) return;
+  busy = true;
+  try {
+    if (!task) await create($("#scope")?.value || "real", $("#currency")?.value || "CNY");
+    render();
+    saveLocal(await api(fault ? "/api/lab/chat" : "/api/chat", requestBody({text: message, fault})));
+    cart = null;
+  } catch (error) {
+    notice(error.message);
+    if (task) saveLocal(await api("/api/task/" + task.id));
+  } finally {
+    busy = false;
+    render();
+  }
+}
+
+const planLines = () => task.items.map(({offer_id, quantity, required, reason}) =>
+  ({offer_id, quantity, required, reason}));
+
+async function editItems(items) {
+  saveLocal(await api("/api/edit", requestBody({action: "plan", items})));
+  cart = null;
+  render();
+}
+
+async function showCatalog(id) {
+  if (!task) await create();
+  replaceId = id || null;
+  if (task.scope === "real") {
+    modal("Search products", "<p>Describe what you need in the conversation. Include the budget or a key specification when it matters.</p>");
+    return;
+  }
+  const old = task.items.find(item => item.offer_id === id);
+  const rows = catalog[task.scope].filter(snapshot =>
+    (!old || snapshot.product.category === old.snapshot.product.category) &&
+    snapshot.offer.id !== id
+  );
+  modal(id ? "Replace item" : "Demo catalog",
+    '<div class="catalog-grid">' + rows.map(snapshot =>
+      '<article class="catalog-card">' + productImage(snapshot) + '<h3>' +
+      esc(snapshot.product.name) + '</h3><p>' + esc(snapshot.variant.spec) + '</p><p>' +
+      esc(Object.values(snapshot.product.attributes || {}).join(" · ")) + '</p><span class="badge">' +
+      esc(kindLabels[snapshot.product.kind] || snapshot.product.kind) + '</span><strong>' +
+      money(snapshot.offer.price_minor, snapshot.offer.currency) + '</strong><p>' +
+      esc(snapshot.offer.conditions) + '</p>' +
+      (snapshot.product.evidence || []).filter(entry => entry.url).map(entry =>
+        '<a target="_blank" rel="noopener" href="' + esc(entry.url) + '">Source ↗</a>'
+      ).join("") + '<button data-action="add" data-id="' + esc(snapshot.offer.id) + '" ' +
+      (snapshot.offer.currency !== (task.currency || "CNY") ? "disabled" : "") + '>' +
+      (snapshot.offer.currency !== (task.currency || "CNY")
+        ? "Different currency"
+        : replaceId ? "Use this item" : "Add to plan") +
+      '</button></article>').join("") + '</div>');
+}
+
+function confirmationPanel() {
+  const shippingUnknown = task.totals.unknown.some(entry => String(entry).includes("运费") || /shipping/i.test(entry));
+  modal("Review your plan",
+    '<p>Check the seller, specifications, quantities, and known costs.</p>' +
+    task.items.map(item => '<div class="confirm-line"><strong>' +
+      esc(item.snapshot.product.name) + '</strong>' + esc(item.snapshot.offer.merchant) +
+      ' · ' + esc(item.snapshot.variant.spec) + '<br>SKU ' + esc(item.snapshot.variant.sku) +
+      ' · Qty ' + item.quantity + ' · ' +
+      money(item.snapshot.offer.price_minor, item.snapshot.offer.currency) + '</div>').join("") +
+    '<p>Known total: ' + money(task.totals.known_total_minor, task.totals.currency) +
+    '<br>Shipping: ' + (shippingUnknown ? "Unknown" : money(task.totals.shipping_known_minor)) +
+    '</p><label class="check-label"><input id="ack" type="checkbox">' +
+    'I have reviewed this version and its unknown costs.</label>',
+    '<button data-action="close">Keep editing</button>' +
+    '<button class="primary" data-action="do-confirm">Confirm plan</button>');
+}
+
+function showEntries(nextCart) {
+  cart = nextCart;
+  modal("Purchase options",
+    '<p>Revision ' + nextCart.revision + '</p>' +
+    nextCart.entries.map((entry, index) =>
+      '<div class="entry"><strong>' + esc(entry.merchant) + '</strong><small>' +
+      esc(entry.kind === "local_demo" ? "Local demo" :
+        entry.kind === "shopify_test" ? "Test store" :
+        entry.kind === "external" ? "Seller website" : "Link unavailable") +
+      '</small>' + (entry.url
+        ? '<button class="primary" data-action="jump" data-index="' + index + '">' +
+          esc(entry.label) + ' ↗</button>'
+        : esc(entry.label)) + '</div>'
+    ).join(""),
+    '<button data-action="close">Close</button><button data-action="mark">Mark as purchased</button>');
+}
+
+async function route(path, push = true) {
+  if (push) history.pushState({}, "", path);
+  document.body.classList.toggle("maintenance", /^\/(runs|evaluation)(\/|$)/.test(path));
+  const title = path.startsWith("/runs") ? "Activity" :
+    path.startsWith("/evaluation") ? "Evaluation" :
+    path === "/lab" ? "Lab" : "Workspace";
+  document.title = "ShopFlow · " + title;
+  render();
+  if (path === "/") return;
+  $("#main").innerHTML = '<p class="loading">Loading…</p>';
+  try {
+    if (path === "/runs" || path.startsWith("/runs/") ||
+        path === "/evaluation" || path.startsWith("/evaluation/")) {
+      await MaintenanceUI.route(path);
+    } else if (path === "/lab") {
+      $("#main").innerHTML = '<div class="page"><h1>Lab</h1><p>Test failure recovery on the current list.</p>' +
+        '<section class="panel"><h3>Failure injection</h3><p>' +
+        (!boot.test_lab ? "Enable the test lab to use these controls." : "The test lab is ready.") +
+        '</p><p>Current list: ' + esc(task?.title || "None") + '</p><div class="toolbar">' +
+        '<button data-action="fault-search" ' + (!boot.test_lab || !task ? "disabled" : "") +
+        '>Search timeout</button><button data-action="fault-model" ' +
+        (!boot.test_lab || !task ? "disabled" : "") + '>Model failure</button>' +
+        '<button data-action="fault-checkout" ' +
+        (!boot.test_lab || !task?.confirmation ? "disabled" : "") +
+        '>Checkout failure</button></div></section></div>';
+    } else if (path.startsWith("/checkout/")) {
+      const response = await api("/api/cart/" + path.split("/").pop());
+      const data = response.body;
+      $("#main").innerHTML = '<div class="page checkout-summary"><span class="pill">Demo checkout</span>' +
+        '<h1>Checkout rehearsal</h1><p>No payment or order is created.</p><div class="panel">' +
+        (data.snapshot?.items || []).map(item => '<div class="confirm-line"><strong>' +
+          esc(item.snapshot.product.name) + '</strong>' + esc(item.snapshot.variant.spec) +
+          ' × ' + item.quantity + '<br>' +
+          money(item.snapshot.offer.price_minor, item.snapshot.offer.currency) + '</div>').join("") +
+        '<p>Known total ' + money(data.snapshot?.totals.known_total_minor,
+          data.snapshot?.currency || "CNY") + '</p><p>' + esc(labelStatus(data.status)) +
+        '</p><button class="primary wide" data-action="finish-demo" data-id="' +
+        esc(response.id) + '">Complete demo</button></div>' +
+        '<a href="/" data-nav="/">← Back to workspace</a></div>';
+    } else if (path === "/preferences") {
+      history.replaceState({}, "", "/");
+      render();
+      showPreferences();
+    }
+  } catch (error) {
+    $("#main").innerHTML = '<div class="page"><h2>Could not load this page</h2><p>' +
+      esc(error.message) + '</p><a href="/" data-nav="/">Back to workspace</a></div>';
+  }
+  setRouteLabel();
+}
+
+function showPreferences() {
+  const preferences = boot.preferences;
+  modal("Preferences",
+    '<label>Things you own<input id="owned" type="text" value="' +
+    esc(preferences.owned.join(", ")) + '" placeholder="Mouse, monitor"></label>' +
+    '<label>Shopping preferences<textarea id="pref-text" rows="4" ' +
+    'placeholder="Quiet keys, limited desk space">' + esc(preferences.text) +
+    '</textarea></label>',
+    '<button data-action="close">Cancel</button>' +
+    '<button class="primary" data-action="save-preferences">Save</button>');
+}
+
+document.addEventListener("click", async event => {
+  const navigation = event.target.closest("[data-nav]");
+  if (navigation) {
+    event.preventDefault();
+    return route(navigation.dataset.nav);
+  }
+  const element = event.target.closest("[data-action]");
+  if (!element || element.disabled) return;
+  const action = element.dataset.action;
+  try {
+    if (action === "close") closeModal();
+    else if (action === "new") { await create(); await route("/"); }
+    else if (action === "history") {
+      saveLocal(await api("/api/task/" + element.dataset.id));
+      cart = null;
+      await route("/");
+    } else if (action === "example") await send(element.dataset.text);
+    else if (action === "preferences") showPreferences();
+    else if (action === "save-preferences") {
+      boot.preferences = await api("/api/preferences", {
+        owned: $("#owned").value.split(/[,，、]/).map(value => value.trim()).filter(Boolean),
+        text: $("#pref-text").value
+      });
+      closeModal();
+      notice("Preferences saved.");
+    } else if (action === "catalog" || action === "replace") {
+      await showCatalog(action === "replace" ? element.dataset.id : null);
+    } else if (action === "add") {
+      const items = planLines();
+      if (replaceId) {
+        const item = items.find(entry => entry.offer_id === replaceId);
+        item.offer_id = element.dataset.id;
+        item.reason = "Selected as a replacement; review the specifications.";
+      } else {
+        if (items.some(entry => entry.offer_id === element.dataset.id)) {
+          throw new Error("This item is already in the plan.");
+        }
+        items.push({
+          offer_id: element.dataset.id,
+          quantity: 1,
+          required: true,
+          reason: "Selected by the user."
+        });
+      }
+      await editItems(items);
+      closeModal();
+    } else if (action === "remove") {
+      await editItems(planLines().filter(item => item.offer_id !== element.dataset.id));
+    } else if (action === "priority") {
+      const items = planLines();
+      const item = items.find(entry => entry.offer_id === element.dataset.id);
+      item.required = !item.required;
+      await editItems(items);
+    } else if (action === "quantity") {
+      const items = planLines();
+      const item = items.find(entry => entry.offer_id === element.dataset.id);
+      item.quantity += Number(element.dataset.delta);
+      if (item.quantity < 1) throw new Error("Quantity must be at least one.");
+      await editItems(items);
+    } else if (action === "refresh") {
+      saveLocal(await api("/api/edit", requestBody({action: "refresh"})));
+      cart = null;
+      render();
+      notice("Plan refreshed.");
+    } else if (action === "confirm") confirmationPanel();
+    else if (action === "do-confirm") {
+      if (!$("#ack").checked) throw new Error("Review and accept the note first.");
+      element.disabled = true;
+      saveLocal(await api("/api/confirm", requestBody({acknowledge_unknown: true})));
+      closeModal();
+      render();
+      notice("Plan confirmed.");
+    } else if (action === "checkout") {
+      element.disabled = true;
+      showEntries(await api("/api/checkout", requestBody()));
+    } else if (action === "jump") {
+      const result = await api("/api/jump", {cart_id: cart.id, index: Number(element.dataset.index)});
+      if (result.url.startsWith("/")) {
+        closeModal();
+        await route(result.url);
+      } else {
+        const link = document.createElement("a");
+        link.href = result.url;
+        link.target = "_blank";
+        link.rel = "noopener";
+        link.click();
+        notice("Link opened.");
+      }
+    } else if (action === "mark") {
+      saveLocal(await api("/api/mark-purchased", requestBody({explicit: true})));
+      closeModal();
+      render();
+    } else if (action === "finish-demo") {
+      await api("/api/demo-finish", {cart_id: element.dataset.id});
+      await route(location.pathname, false);
+    } else if (action === "fault-search" || action === "fault-model") {
+      await send("Find a keyboard under CNY 300.",
+        action === "fault-search" ? "search" : "model");
+      await route("/runs");
+    } else if (action === "fault-checkout") {
+      await api("/api/lab/checkout", requestBody());
+      notice("Checkout test finished.");
+    }
+  } catch (error) {
+    notice(error.message);
+    if (element.isConnected) element.disabled = false;
+    if (error.status === 409 && task) {
+      saveLocal(await api("/api/task/" + task.id));
+      render();
+    }
+  }
+});
+
+document.addEventListener("submit", async event => {
+  event.preventDefault();
+  try {
+    if (event.target.id === "chat-form") {
+      await send($("#message").value);
+    } else if (event.target.id === "budget-form") {
+      const value = $("#budget").value;
+      if (value === "") throw new Error("Enter a budget.");
+      saveLocal(await api("/api/edit", requestBody({
+        action: "budget",
+        budget_minor: Math.round(Number(value) * 100)
+      })));
+      cart = null;
+      render();
+    }
+  } catch (error) {
+    notice(error.message);
+  }
+});
+
+document.addEventListener("change", async event => {
+  if (["scope", "currency"].includes(event.target.id)) {
+    try {
+      const scope = $("#scope").value;
+      const currency = scope === "demo" ? "CNY" : $("#currency").value;
+      await create(scope, currency);
+    } catch (error) {
+      notice(error.message);
+    }
+  }
+});
+
+document.addEventListener("keydown", event => {
+  if (event.target.id === "message" && event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault();
+    send(event.target.value);
+  }
+});
+
+addEventListener("popstate", () => route(location.pathname, false));
+
+(async () => {
+  try {
+    boot = await api("/api/bootstrap");
+    catalog = await api("/api/catalog");
+    task = boot.tasks.find(item => item.id === localStorage.getItem("task")) || boot.tasks[0] || null;
+    render();
+    await route(location.pathname, false);
+  } catch (error) {
+    $("#main").innerHTML = '<div class="page"><h2>ShopFlow is unavailable</h2><p>' +
+      esc(error.message) + '</p><p>Start the service and refresh this page.</p></div>';
+  }
+})();
+
+document.addEventListener("error", event => {
+  if (event.target.tagName === "IMG" && event.target.closest(".product-image")) {
+    event.target.closest(".product-image").textContent = "Image unavailable";
+  }
+}, true);

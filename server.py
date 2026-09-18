@@ -57,7 +57,7 @@ class Handler(BaseHTTPRequestHandler):
             if p.startswith("/api/cart/"):return self.json_response(store.get_cart(self.owner,p.split("/")[-1]))
             if p.startswith("/api/task/"):return self.json_response(core.public_task(store.get_task(self.owner,p.split("/")[-1])))
             if p in ("/","/runs","/evaluation","/preferences","/lab") or p.startswith(("/checkout/","/runs/","/evaluation/")):f=ROOT/"web/index.html"
-            elif p in ("/app.js","/style.css","/maintenance.js","/maintenance-data.js"):f=ROOT/"web"/p[1:]
+            elif p in ("/app.js","/style.css","/maintenance.js","/maintenance-data.js","/shopflow-companion.svg"):f=ROOT/"web"/p[1:]
             else:raise AppError("页面不存在",404)
             self.respond(f.read_bytes(),ctype=mimetypes.guess_type(str(f))[0]+("; charset=utf-8" if f.suffix in (".html",".js",".css") else ""))
         except AppError as e:self.json_response({"error":str(e),"category":e.category},e.status)
