@@ -221,6 +221,9 @@ def public_task(t):
     out=copy.deepcopy(t); out.pop("owner",None)
     cache=out.pop("search_cache",{})
     out["cached_offers"]=[{"offer_id":oid,"name":s["product"]["name"],"category":s["product"]["category"],
-        "source_url":s["offer"]["url"],"collected_at":s["offer"]["captured_at"]} for oid,s in cache.items()]
+        "image":s["product"].get("image"),"spec":s["variant"].get("spec"),
+        "price_minor":s["offer"].get("price_minor"),"currency":s["offer"].get("currency"),
+        "merchant":s["offer"].get("merchant"),"source_url":s["offer"]["url"],
+        "collected_at":s["offer"]["captured_at"]} for oid,s in cache.items()]
     out["totals"]=totals(t); out["compatibility"]=compatibility(t)
     return out

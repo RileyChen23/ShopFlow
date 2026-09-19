@@ -42,3 +42,10 @@ class MaintenanceTests(unittest.TestCase):
         b=maintenance.bundle();self.assertTrue(b["metadata"]["cases_match"]);self.assertEqual(b["metadata"]["catalog_match"], __import__("hashlib").sha256((core.ROOT/"data/catalog.json").read_bytes()).hexdigest()==b["report"]["catalog_sha256"])
         self.assertEqual(store.runs("different-owner"),[])
         self.assertFalse(b["metadata"]["current_code_verified_by_historical_report"])
+    def test_workspace_has_safe_markdown_tables_links_and_recent_tasks(self):
+        app=(core.ROOT/"web/app.js").read_text(encoding="utf-8")
+        self.assertIn("function markdown(value)",app)
+        self.assertIn('class="message-table"',app)
+        self.assertIn('rel="noopener"',app)
+        self.assertIn("Recent shopping",app)
+        self.assertIn("Add from results",app)

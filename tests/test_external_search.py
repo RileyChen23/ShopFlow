@@ -33,9 +33,20 @@ class ExternalSearchTests(unittest.TestCase):
         rows=ctx.execute("search_products",{"category":"键盘","query":"wireless keyboard China"})
         oid=rows[0]["offer"]["id"]
         self.assertIn(oid,task["search_cache"]);self.assertEqual(task["search_history"][-1]["request_id"],"request-1")
+        cached=core.public_task(task)["cached_offers"][0]
+        self.assertEqual(cached["name"],"Logitech keyboard");self.assertIn("price_minor",cached)
+        self.assertEqual(cached["source_url"],"https://shop.example.com/kbd")
         evidence=ctx.execute("read_evidence",{"offer_id":oid});self.assertEqual(evidence["product"]["kind"],"external")
         result=ctx.execute("set_plan",{"items":[{"offer_id":oid,"quantity":1,"required":True,"reason":"test"}]})
         self.assertEqual(result["items"][0]["offer_id"],oid);self.assertTrue(any(x.startswith("商品价格未知") for x in result["totals"]["unknown"]))
+    def test_ranked_search_can_recover_an_editable_draft(self):
+        task=core.fresh_task("external","real");task["currency"]="CNY"
+        ctx=agent.Context(task,searcher=FakeProvider())
+        rows=ctx.execute("search_products",{"category":"键盘","query":"wired classroom keyboard"})
+        self.assertTrue(agent.commit_ranked_draft(ctx,"先买 2 个键盘"))
+        self.assertEqual(task["items"][0]["offer_id"],rows[0]["offer"]["id"])
+        self.assertEqual(task["items"][0]["quantity"],2)
+        self.assertTrue(ctx.plan_updated)
     def test_real_mode_never_uses_local_catalog(self):
         task=core.fresh_task("external","real");ctx=agent.Context(task,searcher=FakeProvider())
         with patch.object(core,"search",side_effect=AssertionError("local catalog used")):

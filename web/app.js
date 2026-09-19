@@ -3,6 +3,79 @@ const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
 }[char]));
 
+function inlineMarkdown(value) {
+  const links = [];
+  let source = String(value ?? "").replace(/\[([^\]\n]+)\]\((https:\/\/[^\s)]+)\)/g,
+    (_, label, url) => {
+      const index = links.push({label, url}) - 1;
+      return `@@SHOPFLOW_LINK_${index}@@`;
+    });
+  source = esc(source)
+    .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/`([^`\n]+)`/g, "<code>$1</code>");
+  return source.replace(/@@SHOPFLOW_LINK_(\d+)@@/g, (_, index) => {
+    const link = links[Number(index)];
+    return '<a href="' + esc(link.url) + '" target="_blank" rel="noopener">' +
+      esc(link.label) + '<span aria-hidden="true"> ↗</span></a>';
+  });
+}
+
+function markdown(value) {
+  const lines = String(value ?? "").replace(/\r/g, "").split("\n");
+  const output = [];
+  const cells = line => line.trim().replace(/^\|/, "").replace(/\|$/, "")
+    .split("|").map(cell => cell.trim());
+  const isDivider = line => /^\s*\|?\s*:?-{3,}/.test(line) && line.includes("|");
+  let index = 0;
+  while (index < lines.length) {
+    const line = lines[index];
+    if (!line.trim()) { index += 1; continue; }
+    if (line.includes("|") && index + 1 < lines.length && isDivider(lines[index + 1])) {
+      const head = cells(line);
+      index += 2;
+      const rows = [];
+      while (index < lines.length && lines[index].includes("|") && lines[index].trim()) {
+        rows.push(cells(lines[index])); index += 1;
+      }
+      output.push('<div class="message-table"><table><thead><tr>' +
+        head.map(cell => '<th>' + inlineMarkdown(cell) + '</th>').join("") +
+        '</tr></thead><tbody>' + rows.map(row => '<tr>' +
+          head.map((_, cellIndex) => '<td>' + inlineMarkdown(row[cellIndex] || "") + '</td>').join("") +
+        '</tr>').join("") + '</tbody></table></div>');
+      continue;
+    }
+    if (/^\s*[-*]\s+/.test(line)) {
+      const items = [];
+      while (index < lines.length && /^\s*[-*]\s+/.test(lines[index])) {
+        items.push(lines[index].replace(/^\s*[-*]\s+/, "")); index += 1;
+      }
+      output.push('<ul>' + items.map(item => '<li>' + inlineMarkdown(item) + '</li>').join("") + '</ul>');
+      continue;
+    }
+    if (/^\s*\d+[.)]\s+/.test(line)) {
+      const items = [];
+      while (index < lines.length && /^\s*\d+[.)]\s+/.test(lines[index])) {
+        items.push(lines[index].replace(/^\s*\d+[.)]\s+/, "")); index += 1;
+      }
+      output.push('<ol>' + items.map(item => '<li>' + inlineMarkdown(item) + '</li>').join("") + '</ol>');
+      continue;
+    }
+    const heading = line.match(/^\s*(#{1,3})\s+(.+)$/);
+    if (heading) {
+      const level = Math.min(heading[1].length + 2, 5);
+      output.push(`<h${level}>${inlineMarkdown(heading[2])}</h${level}>`); index += 1; continue;
+    }
+    const paragraph = [line]; index += 1;
+    while (index < lines.length && lines[index].trim() &&
+      !/^\s*(?:[-*]\s+|\d+[.)]\s+|#{1,3}\s+)/.test(lines[index]) &&
+      !(lines[index].includes("|") && index + 1 < lines.length && isDivider(lines[index + 1]))) {
+      paragraph.push(lines[index]); index += 1;
+    }
+    output.push('<p>' + paragraph.map(inlineMarkdown).join("<br>") + '</p>');
+  }
+  return output.join("");
+}
+
 let boot;
 let task = null;
 let catalog = {demo: [], real: []};
@@ -111,8 +184,10 @@ function productCard(item) {
     '<div class="product-info"><h3>' + esc(product.name) + '</h3><p class="spec">' +
     esc(snapshot.variant.spec) + '</p><span class="badge">' +
     (item.required ? "Required" : "Optional") + '</span> <span class="badge amber">' +
-    esc(kindLabels[product.kind] || product.kind) + '</span></div><div class="price">' +
-    money(offer.price_minor, offer.currency) + '</div></div><p class="reason">' +
+    esc(kindLabels[product.kind] || product.kind) + '</span>' +
+    (offer.url ? '<a class="product-link" href="' + esc(offer.url) +
+      '" target="_blank" rel="noopener">View product ↗</a>' : '') +
+    '</div><div class="price">' + money(offer.price_minor, offer.currency) + '</div></div><p class="reason">' +
     esc(item.reason) + '</p><details><summary>Details and sources</summary><p>' +
     esc(attributes) + '</p><p>' + esc(offer.merchant) + ' · SKU ' +
     esc(snapshot.variant.sku) + '</p><p>' + esc(priceType) + ' · ' +
@@ -174,7 +249,7 @@ function planPanel() {
     '" ' + (!items.length || busy ? "disabled" : "") + '>' +
     (task?.confirmation ? "Open purchase options →" : "Review and confirm →") + '</button>' +
     '<div class="secondary-row"><button data-action="catalog">' +
-    (task?.scope === "demo" ? "Browse demo items" : "Search tips") + '</button>' +
+    (task?.scope === "demo" ? "Browse demo items" : "Add from results") + '</button>' +
     (items.length ? '<button data-action="refresh">Refresh</button>' : "") +
     '</div>' + (task ? '<p>' + esc(labelStatus(task.status)) + '</p>' : "") + '</div></section>';
 }
@@ -184,17 +259,41 @@ function conversationContent() {
     return '<div class="messages">' + task.messages.map(message =>
       '<div class="bubble ' + (message.role === "user" ? "user" : "") +
       '"><span class="bubble-label">' + (message.role === "user" ? "You" : "ShopFlow") +
-      '</span>' + esc(message.content) + '</div>'
+      '</span><div class="message-content">' +
+      (message.role === "user" ? '<p>' + esc(message.content) + '</p>' : markdown(message.content)) +
+      '</div></div>'
     ).join("") + (busy ? '<p class="status-line">Working on your request…</p>' : "") + '</div>';
   }
-  return '<div class="welcome"><img class="companion-icon" src="/shopflow-companion.svg" alt="">' +
-    '<h1>What are we finding today?</h1><p>Share what you need, your budget, and what you already own.</p>' +
-    '<div class="examples"><button class="example" data-action="example" ' +
-    'data-text="I have a budget of CNY 1,000 to improve my study desk. I already own a laptop and mouse.">' +
-    '<span>→</span><div><strong>Upgrade my study setup</strong>' +
-    '<small>CNY 1,000 · Laptop and mouse already covered</small></div></button></div>' +
-    '<div class="conversation-foot"><span>Source-backed picks</span><span>Easy edits</span>' +
-    '<span>You approve the final plan</span></div></div>';
+  const recent = boot.tasks.filter(item => item.id !== task?.id && item.messages?.length).slice(0, 4);
+  const recentCards = recent.length ? recent.map(item => {
+    const product = item.items?.[0]?.snapshot?.product;
+    const visual = product?.image
+      ? '<img src="' + esc(product.image) + '" alt="" loading="lazy">'
+      : '<span>' + esc((product?.category || item.title || "S").slice(0, 1).toUpperCase()) + '</span>';
+    return '<button class="recent-card" data-action="history" data-id="' + esc(item.id) +
+      '"><span class="recent-visual">' + visual + '</span><strong>' +
+      esc(item.title === "新的采购任务" ? "Shopping list" : item.title) + '</strong><small>' +
+      esc(item.items?.length ? item.items.length + " planned item" + (item.items.length === 1 ? "" : "s") : "Continue shopping") +
+      '</small></button>';
+  }).join("") : '<p class="recent-empty">Your recent shopping tasks will appear here.</p>';
+  return '<div class="welcome"><div class="welcome-orb"><img class="companion-icon" src="/shopflow-companion.svg" alt=""></div>' +
+    '<p class="eyebrow">SHOPFLOW</p><h1>What are you looking for?</h1>' +
+    '<p>Describe what you need. Add a budget or a must-have detail when it matters.</p>' +
+    composer(true) +
+    '<div class="prompt-chips"><button data-action="example" ' +
+    'data-text="I have a budget of CNY 1,000 to improve my study desk. I already own a laptop and mouse.">Study setup</button>' +
+    '<button data-action="example" data-text="Find a reliable wired USB keyboard under USD 20.">Keyboard under $20</button></div>' +
+    '<section class="recent-section"><div class="recent-head"><h2>Recent shopping</h2><span>Pick up where you left off</span></div>' +
+    '<div class="recent-grid">' + recentCards + '</div></section></div>';
+}
+
+function composer(hero = false) {
+  return '<form class="composer ' + (hero ? "hero-composer" : "") + '" id="chat-form">' +
+    '<textarea id="message" aria-label="Shopping request" placeholder="Describe what you want to buy…" maxlength="2000" ' +
+    (busy ? "disabled" : "") + '></textarea><div class="composer-row"><small>' +
+    ((!task || task.scope === "real") ? "Shop products" : "Demo catalog") +
+    '</small><button class="primary send" type="submit" aria-label="Send" ' +
+    (busy ? "disabled" : "") + '></button></div></form>';
 }
 
 function workspace() {
@@ -207,13 +306,9 @@ function workspace() {
     '<select id="currency" aria-label="Currency"><option value="CNY">CNY</option>' +
     '<option value="USD" ' + (task?.currency === "USD" ? "selected" : "") + '>USD</option>' +
     '<option value="GBP" ' + (task?.currency === "GBP" ? "selected" : "") + '>GBP</option></select></div></div>' +
-    '<div class="columns"><section class="conversation">' + conversationContent() +
-    '<form class="composer" id="chat-form"><textarea id="message" aria-label="Shopping request" ' +
-    'placeholder="Ask ShopFlow…" maxlength="2000" ' + (busy ? "disabled" : "") +
-    '></textarea><div class="composer-row"><small>' +
-    ((!task || task.scope === "real") ? "Live" : "Demo") +
-    '</small><button class="primary send" type="submit" aria-label="Send" ' +
-    (busy ? "disabled" : "") + '></button></div></form></section>' + planPanel() + '</div></div>';
+    '<div class="columns ' + (task?.messages.length ? "active-chat" : "landing") +
+    '"><section class="conversation">' + conversationContent() +
+    (task?.messages.length ? composer() : "") + '</section>' + planPanel() + '</div></div>';
 }
 
 function modeSummary() {
@@ -288,7 +383,23 @@ async function showCatalog(id) {
   if (!task) await create();
   replaceId = id || null;
   if (task.scope === "real") {
-    modal("Search products", "<p>Describe what you need in the conversation. Include the budget or a key specification when it matters.</p>");
+    const planned = new Set(task.items.map(item => item.offer_id));
+    const rows = (task.cached_offers || []).filter(item => !planned.has(item.offer_id));
+    if (!rows.length) {
+      modal("Add a product", "<p>Ask ShopFlow to find another product first. New results will appear here so you can add them to the plan.</p>");
+      return;
+    }
+    modal(id ? "Choose a replacement" : "Add from search results",
+      '<div class="catalog-grid">' + rows.map(item =>
+        '<article class="catalog-card">' +
+        (item.image ? '<div class="product-image"><img src="' + esc(item.image) + '" alt="' + esc(item.name) + '" loading="lazy"></div>' : '') +
+        '<h3>' + esc(item.name) + '</h3><p>' + esc(item.spec || "Specifications not listed") + '</p>' +
+        '<strong>' + money(item.price_minor, item.currency) + '</strong><p>' + esc(item.merchant || "") + '</p>' +
+        (item.source_url ? '<a target="_blank" rel="noopener" href="' + esc(item.source_url) + '">View product ↗</a>' : '') +
+        '<button data-action="add" data-id="' + esc(item.offer_id) + '" ' +
+        (item.currency !== (task.currency || "CNY") ? "disabled" : "") + '>' +
+        (id ? "Use this product" : "Add to plan") + '</button></article>'
+      ).join("") + '</div>');
     return;
   }
   const old = task.items.find(item => item.offer_id === id);

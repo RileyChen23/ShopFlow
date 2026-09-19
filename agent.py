@@ -11,7 +11,7 @@ SCHEMAS={
 "read_evidence":{"type":"object","properties":{"offer_id":STR},"required":["offer_id"],"additionalProperties":False},
 "set_plan":{"type":"object","properties":{"items":{"type":"array","items":LINE,"maxItems":12}},"required":["items"],"additionalProperties":False},
 "check_plan":{"type":"object","properties":{},"additionalProperties":False}}
-DESCRIPTIONS={"update_constraints":"更新本次任务约束，不写长期偏好，预算单位为分。赠礼时清除本人已有物品。","search_products":"正式模式调用外部实时 Search Provider。根据用户需求生成具体 query，包含品类/型号、关键规格和市场；返回最多5个临时报价ID及来源摘要。搜索摘要不是完整网页，价格可能未知。演练模式只查测试夹具。","read_evidence":"读取搜索结果对应的报价、规格摘要、采集时间和来源；推荐前必须读取。","set_plan":"用已读取证据的报价 ID 更新整个方案；服务器校验预算和身份。","check_plan":"计算已知费用、未知费用和兼容性待核实事项。"}
+DESCRIPTIONS={"update_constraints":"更新本次任务约束，不写长期偏好，预算单位为分。赠礼时清除本人已有物品。","search_products":"正式模式调用外部商品 Search Provider。根据用户需求生成具体 query，包含品类/型号、关键规格和市场；返回最多5个临时报价ID及来源摘要。搜索摘要不是完整网页，价格可能未知。有可用候选时，本轮需读取首选依据并建立可编辑方案。演练模式只查测试夹具。","read_evidence":"读取搜索结果对应的报价、规格摘要、采集时间和来源；推荐或加入方案前必须读取。","set_plan":"用已读取证据的报价 ID 更新整个方案；服务器校验预算和身份。需求足够明确且已有可用候选时必须调用；未给数量时首选按1件建立初稿。","check_plan":"计算已知费用、未知费用和兼容性待核实事项。"}
 SCHEMAS["get_task"]={"type":"object","properties":{},"additionalProperties":False}
 SCHEMAS["get_preferences"]={"type":"object","properties":{},"additionalProperties":False}
 SCHEMAS["update_item"]={"type":"object","properties":{"offer_id":STR,"quantity":{"type":"integer","minimum":1,"maximum":99},"required":{"type":"boolean"},"remove":{"type":"boolean"}},"required":["offer_id"],"additionalProperties":False}
@@ -154,11 +154,31 @@ def workflow_tools(ctx):
 def state_fallback(ctx):
     totals=core.totals(ctx.t)
     if ctx.t["items"]:
-        items="、".join(i["snapshot"]["product"]["name"]+" × "+str(i["quantity"]) for i in ctx.t["items"])
-        total="已知合计 "+totals["currency"]+" "+format(totals["known_total_minor"]/100,".2f")
-        unknown="；部分价格、运费或库存还需在商品页确认" if totals["unknown"] else ""
-        return "我已保留这份方案："+items+"；"+total+unknown+"。"
-    return "这次还没有找到合适的商品。你的预算和要求已经保留，可以继续调整条件或重新搜索。"
+        items=", ".join(i["snapshot"]["product"]["name"]+" × "+str(i["quantity"]) for i in ctx.t["items"])
+        total=totals["currency"]+" "+format(totals["known_total_minor"]/100,".2f")
+        unknown=" Some prices, shipping costs, or stock details still need confirmation on the product page." if totals["unknown"] else ""
+        return "I've added this to your shopping plan: "+items+". Known total: "+total+"."+unknown
+    return "I couldn’t find a suitable product this time. I’ve kept your budget and preferences so we can adjust the request and try again."
+
+def commit_ranked_draft(ctx,text):
+    """Last-step recovery: turn ranked search evidence into an editable first draft."""
+    if ctx.t.get("items"):return False
+    matches=re.findall(r"(?:数量\s*(?:是|为|改成|调整为)?\s*|买\s*)?(\d+)\s*(?:个|件|台|只|把|盏|套|units?|keyboards?|mice|monitors?)",text,re.I)
+    quantity=max(1,min(int(matches[-1]),99)) if matches else 1
+    seen=set()
+    for offer_ids in ctx.search_results.values():
+        for offer_id in offer_ids:
+            if offer_id in seen:continue
+            seen.add(offer_id)
+            try:
+                snap=core.snapshot(offer_id,ctx.t)
+                if snap["offer"].get("currency")!=ctx.t.get("currency","CNY"):continue
+                ctx.execute("read_evidence",{"offer_id":offer_id})
+                ctx.execute("set_plan",{"items":[{"offer_id":offer_id,"quantity":quantity,"required":True,
+                    "reason":"Best current match from the verified search results; adjust or replace it as needed."}]})
+                return True
+            except AppError:continue
+    return False
 
 def offline(ctx,text,pref):
     t=ctx.t
@@ -265,7 +285,8 @@ def _live(ctx,text,pref,meta):
         remaining=max_calls-meta["model_calls"]
         tools=workflow_tools(ctx)
         last_tool_recovery=bool(ctx.pending_plan or ctx.read_this_turn or ctx.search_results)
-        final_only=remaining<=1 and not last_tool_recovery
+        plan_needed=bool(ctx.search_results) and not ctx.plan_updated
+        final_only=ctx.plan_updated or (remaining<=1 and not plan_needed)
         if ctx.plan_updated:final_only=True
         meta["reserve_final_response"]=not last_tool_recovery
         if final_only:
@@ -282,10 +303,16 @@ def _live(ctx,text,pref,meta):
         if not calls:
             answer=msg.get("content")
             if not isinstance(answer,str) or not answer.strip():raise AppError("模型未返回有效回复",502,"依赖故障")
+            if plan_needed:
+                if remaining>1:
+                    messages.append({"role":"system","content":"The request is actionable and product results are available. Do not finish with comparison prose only. Read the chosen offer evidence and call set_plan with the best current option (quantity 1 if unspecified), then give the concise customer-facing comparison."})
+                    continue
+                if not commit_ranked_draft(ctx,text):
+                    raise AppError("找到的商品暂时无法组成当前币种和预算下的方案",400,"推荐约束")
             # URLs in model prose must be from current verified evidence, not invented.
             allowed=set()
-            for i in ctx.t["items"]:
-                snap=i["snapshot"]
+            evidence=list((ctx.t.get("search_cache") or {}).values())+[i["snapshot"] for i in ctx.t["items"]]
+            for snap in evidence:
                 allowed.update(e.get("url") for e in snap["product"]["evidence"])
                 allowed.add(snap["offer"].get("url"))
             for url in re.findall(r"https?://[^\s<>）)\]]+",answer):
