@@ -200,6 +200,7 @@ function workspace() {
   const title = task && task.title !== "新的采购任务" ? task.title : "New shopping list";
   return '<div class="workspace"><div class="workspace-head"><div><h2>' + esc(title) +
     '</h2></div><div class="scope-control"><button class="compact-new" data-action="new">＋ New</button>' +
+    (task ? '<button class="delete-task" data-action="delete-task">Delete</button>' : '') +
     '<select id="scope" aria-label="Shopping mode"><option value="real" ' +
     ((!task || task.scope === "real") ? "selected" : "") + '>Live</option><option value="demo" ' +
     (task?.scope === "demo" ? "selected" : "") + '>Demo</option></select>' +
@@ -409,6 +410,14 @@ function showPreferences() {
     '<button class="primary" data-action="save-preferences">Save</button>');
 }
 
+function showDeleteTask() {
+  if (!task) return;
+  modal("Delete this conversation?",
+    "<p>This removes its messages, shopping plan, activity records, and checkout rehearsals from this device.</p>",
+    '<button data-action="close">Cancel</button>' +
+    '<button class="danger-button" data-action="do-delete-task">Delete conversation</button>');
+}
+
 document.addEventListener("click", async event => {
   const navigation = event.target.closest("[data-nav]");
   if (navigation) {
@@ -427,6 +436,20 @@ document.addEventListener("click", async event => {
       await route("/");
     } else if (action === "example") await send(element.dataset.text);
     else if (action === "preferences") showPreferences();
+    else if (action === "delete-task") showDeleteTask();
+    else if (action === "do-delete-task") {
+      const deletedId = task.id;
+      element.disabled = true;
+      await api("/api/delete-task", requestBody());
+      boot.tasks = boot.tasks.filter(item => item.id !== deletedId);
+      task = boot.tasks[0] || null;
+      if (task) localStorage.setItem("task", task.id);
+      else localStorage.removeItem("task");
+      cart = null;
+      closeModal();
+      await route("/", false);
+      notice("Conversation deleted.");
+    }
     else if (action === "save-preferences") {
       boot.preferences = await api("/api/preferences", {
         owned: $("#owned").value.split(/[,，、]/).map(value => value.trim()).filter(Boolean),

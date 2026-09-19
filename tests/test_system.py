@@ -178,6 +178,11 @@ class APITests(unittest.TestCase):
     def test_no_userid_authority(self):
         t=self.c.new();other=Client(self.base)
         self.assertEqual(other.post("/api/edit",{"task_id":t["id"],"revision":0,"userId":t.get("owner"),"action":"plan","items":[line()]})[0],404)
+    def test_delete_conversation_is_owner_scoped(self):
+        t=self.c.new();other=Client(self.base)
+        self.assertEqual(other.post("/api/delete-task",{"task_id":t["id"],"revision":t["revision"]})[0],404)
+        self.assertEqual(self.c.post("/api/delete-task",{"task_id":t["id"],"revision":t["revision"]})[0],200)
+        self.assertEqual(self.c.request("/api/task/"+t["id"])[0],404)
     def test_unknown_outcome_not_retried(self):
         with patch.dict(os.environ,{"ENABLE_TEST_LAB":"1"}):
             t=self.prepared();b={"task_id":t["id"],"revision":t["revision"]}

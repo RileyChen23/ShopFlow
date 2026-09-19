@@ -11,7 +11,7 @@ SEARCH_API_KEY=your_tavily_key
 
 ## DeepSeek
 
-默认使用 `deepseek-v4-flash` 和 Chat Completions function tools。适配层使用非流式响应、关闭思考模式，并在执行每个工具前进行服务端 schema 校验。
+默认使用 `deepseek-flash` 和 Chat Completions function tools。适配层使用非流式响应、关闭思考模式，并在执行每个工具前进行服务端 schema 校验。可用模型名称应以当前账号的 `/models` 返回为准。
 
 - [接口参考](https://api-docs.deepseek.com/api/create-chat-completion/)
 - [工具与思考模式](https://api-docs.deepseek.com/zh-cn/guides/thinking_mode/)

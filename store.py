@@ -47,6 +47,20 @@ def save_task(t,expected):
         db.commit()
     return t
 
+def delete_task(owner,tid,expected):
+    """Delete one user-selected conversation and its local audit artifacts."""
+    with contextlib.closing(connect()) as db:
+        db.execute("BEGIN IMMEDIATE")
+        row=db.execute("SELECT revision FROM tasks WHERE id=? AND owner=?",(tid,owner)).fetchone()
+        if not row:raise AppError("任务不存在或不可访问",404)
+        if row["revision"]!=expected:raise AppError("方案已更新，请刷新后重试",409)
+        db.execute("DELETE FROM carts WHERE task_id=? AND owner=?",(tid,owner))
+        db.execute("DELETE FROM runs WHERE task_id=? AND owner=?",(tid,owner))
+        deleted=db.execute("DELETE FROM tasks WHERE id=? AND owner=? AND revision=?",(tid,owner,expected))
+        if deleted.rowcount!=1:raise AppError("任务删除失败，请刷新后重试",409)
+        db.commit()
+    return {"deleted":tid}
+
 def preferences(owner,value=None):
     with contextlib.closing(connect()) as db:
         if value is not None:

@@ -52,7 +52,7 @@ python server.py
 
 ## 模型与工具循环
 
-当前适配 DeepSeek Chat Completions function tools，默认模型配置为 `deepseek-v4-flash`。一次对话的执行过程是：
+当前适配 DeepSeek Chat Completions function tools，默认模型配置为 `deepseek-flash`。一次对话的执行过程是：
 
 1. 服务端向模型提供用户输入、当前任务状态和可用工具。
 2. 模型选择追问、调用工具或生成结果。
@@ -68,7 +68,7 @@ python server.py
 |---|---|---|
 | `AGENT_MODE` | `live` 使用真实模型，`offline` 使用规则演练 | `live` |
 | `LLM_BASE_URL` | 模型 API 地址 | `https://api.deepseek.com` |
-| `LLM_MODEL` | 模型名称 | `deepseek-v4-flash` |
+| `LLM_MODEL` | 模型名称 | `deepseek-flash` |
 | `LLM_PROMPT_VERSION` | 当前提示策略 | `shopflow` |
 | `LLM_BUDGET_ID` | 本机持久调用额度标识 | `local-validation` |
 | `LLM_MAX_CALLS` | 单轮模型请求上限 | `8` |

@@ -102,6 +102,7 @@ class Handler(BaseHTTPRequestHandler):
         t=store.get_task(self.owner,b["task_id"])
         expected=core.integer(b["revision"])
         if t["revision"]!=expected:raise AppError("方案已更新，请刷新后重试",409)
+        if path=="/api/delete-task":return store.delete_task(self.owner,t["id"],expected)
         if path=="/api/chat" or path=="/api/lab/chat":
             text=b["text"].strip()
             if not text or len(text)>2000:raise AppError("请输入 1—2000 字")
