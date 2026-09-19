@@ -15,7 +15,13 @@
 <body>
   <div class="app-frame">
     <aside class="icon-rail" aria-label="Primary navigation">
-      <a class="rail-brand" href="/" aria-label="ShopFlow home">SF</a>
+      <a class="rail-brand" href="/" aria-label="ShopFlow home">
+        <svg viewBox="0 0 44 44" aria-hidden="true">
+          <rect x="5" y="5" width="34" height="34" rx="11" class="brand-back"/>
+          <path d="M14 19h16l-1.4 12H15.4z" class="brand-bag"/>
+          <path d="M18 19v-2.2a4 4 0 0 1 8 0V19" class="brand-handle"/>
+        </svg>
+      </a>
       <nav class="rail-nav">
         <a href="/" data-nav="/" aria-label="Workspace" data-tip="Workspace"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20h-6v-6h-4v6H4z"/></svg></a>
         <a href="/runs" data-nav="/runs" aria-label="Activity" data-tip="Activity"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></svg></a>
@@ -39,6 +45,9 @@
       <div id="notice" role="alert" class="notice" hidden></div>
       <main id="main" aria-live="polite"><p class="loading">Loading…</p></main>
     </section>
+  </div>
+  <div id="history-menu" class="context-menu" role="menu" hidden>
+    <button type="button" role="menuitem" data-action="delete-history">Delete conversation</button>
   </div>
   <dialog id="dialog"><div id="dialog-content"></div></dialog>
 </body>

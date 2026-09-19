@@ -108,7 +108,8 @@ class BadcaseContracts(unittest.TestCase):
     with patch.dict(os.environ,{"LLM_MAX_CALLS":"3","LLM_MAX_RETRIES":"0","LLM_PROMPT_VERSION":"shopflow-v2"}),patch.object(agent,"post_json",side_effect=[first,second,failure]):
       task,trace=agent.run(t(),"预算300元买键盘",{},mode="live")
     self.assertEqual(task["items"][0]["offer_id"],"test-kbd1-o");self.assertEqual(trace["fallback"]["type"],"validated_state_summary")
-    self.assertEqual(trace["status"],"partial");self.assertIn("服务端校验",task["messages"][-1]["content"])
+    self.assertEqual(trace["status"],"partial");self.assertIn("已保留",task["messages"][-1]["content"])
+    self.assertNotIn("服务端",task["messages"][-1]["content"])
  def test_live_controller_recovers_plan_called_before_evidence(self):
     search_call={"id":"search","type":"function","function":{"name":"search_products","arguments":json.dumps({"category":"键盘","query":"键盘"})}}
     reversed_calls=[

@@ -4,7 +4,7 @@
 
 ```dotenv
 LLM_API_KEY=your_deepseek_key
-SEARCH_API_KEY=your_tavily_key
+RAINFOREST_API_KEY=your_rainforest_key
 ```
 
 `.env` 已被 Git 忽略。密钥只用于服务端请求，不会发送到浏览器或写入运行报告。修改配置后需要重启 `python server.py`。
@@ -23,19 +23,22 @@ SEARCH_API_KEY=your_tavily_key
 python budget.py --id local-validation --cap 40
 ```
 
-## Tavily Search
+## Rainforest Product Search
 
-正式任务的 `search_products` 默认调用 Tavily Search API。基础搜索返回标题、来源 URL、相关摘要和请求 ID；ShopFlow 将结果转换为任务级的 `product / variant / offer / evidence` 快照。
+正式任务的 `search_products` 默认调用 Rainforest Product Data API。基础搜索返回 Amazon 商品的 ASIN、标题、链接、图片和可用报价；ShopFlow 将结果转换为任务级的 `product / variant / offer / evidence` 快照。
 
-- [Search API 参考](https://docs.tavily.com/documentation/api-reference/endpoint/search)
-- [API 与认证说明](https://docs.tavily.com/documentation/api-reference/introduction)
+- [Search 参数](https://docs.trajectdata.com/rainforestapi/product-data-api/parameters/search)
+- [通用参数与认证](https://docs.trajectdata.com/rainforestapi/product-data-api/parameters/common)
 
 相关配置：
 
 ```dotenv
-SEARCH_PROVIDER=tavily
-SEARCH_BASE_URL=https://api.tavily.com/search
-SEARCH_TIMEOUT_SECONDS=15
+SEARCH_PROVIDER=rainforest
+RAINFOREST_BASE_URL=https://api.rainforestapi.com/request
+RAINFOREST_API_KEY=your_key
+RAINFOREST_AMAZON_DOMAIN=amazon.com
+RAINFOREST_CUSTOMER_LOCATION=
+SEARCH_TIMEOUT_SECONDS=20
 SEARCH_MAX_RESULTS=5
 ```
 

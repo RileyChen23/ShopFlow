@@ -121,6 +121,9 @@ class APITests(unittest.TestCase):
         cls.http.shutdown();cls.http.server_close();cls.thread.join();store.DB_PATH=cls.old;cls.tmp.cleanup()
     def setUp(self):self.c=Client(self.base)
     def prepared(self):return self.c.confirm(self.c.edit(self.c.new()))
+    def test_real_task_accepts_usd_for_amazon_results(self):
+        status,t=self.c.post("/api/tasks",{"scope":"real","currency":"USD"})
+        self.assertEqual(status,200);self.assertEqual(t["currency"],"USD")
     def test_session_isolation(self):
         t=self.c.new();other=Client(self.base)
         self.assertEqual(other.request("/api/task/"+t["id"])[0],404)

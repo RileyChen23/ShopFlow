@@ -34,11 +34,11 @@ cd ShopFlow
 Copy-Item .env.example .env
 ```
 
-在 `.env` 中填写 DeepSeek 和 Tavily API 密钥：
+在 `.env` 中填写 DeepSeek 和 Rainforest API 密钥：
 
 ```dotenv
 LLM_API_KEY=your_api_key
-SEARCH_API_KEY=your_tavily_api_key
+RAINFOREST_API_KEY=your_rainforest_api_key
 ```
 
 初始化本机调用额度并启动服务：
@@ -73,17 +73,20 @@ python server.py
 | `LLM_BUDGET_ID` | 本机持久调用额度标识 | `local-validation` |
 | `LLM_MAX_CALLS` | 单轮模型请求上限 | `8` |
 | `LLM_MAX_TOOLS` | 单轮工具调用上限 | `20` |
-| `SEARCH_PROVIDER` | 正式模式的商品搜索实现 | `tavily` |
-| `SEARCH_API_KEY` | Tavily 服务端 API 密钥 | 无 |
+| `SEARCH_PROVIDER` | 正式模式的商品搜索实现 | `rainforest` |
+| `RAINFOREST_API_KEY` | Rainforest 服务端 API 密钥 | 无 |
+| `RAINFOREST_AMAZON_DOMAIN` | 商品市场 | `amazon.com` |
 | `SEARCH_MAX_RESULTS` | 每次返回结果上限 | `5` |
 
 完整配置见 [.env.example](.env.example)，模型接入说明见 [docs/model-setup.md](docs/model-setup.md)。
 
 ## 商品资料
 
-正式模式使用可插拔 Search Provider，当前实现为 [Tavily Search API](https://docs.tavily.com/documentation/api-reference/endpoint/search)。模型根据需求生成查询词，Provider 返回标题、来源 URL 和摘要，服务端统一补充采集时间并形成任务级商品证据。通用搜索结果没有可信结构化售价时，价格保持为 `null`。
+正式模式使用可插拔 Search Provider，当前实现为 [Rainforest Product Data API](https://docs.trajectdata.com/rainforestapi/product-data-api/overview)。模型根据需求生成查询词，Provider 从 Amazon 商品搜索返回 ASIN、标题、商品链接、图片和可用报价，服务端统一补充采集时间并形成任务级商品证据。报价缺失时价格保持为 `null`。
 
-`data/catalog.json` 用于 demo、测试夹具和历史评测复现，不再是正式模式的主要商品来源。项目不抓取淘宝或京东商品页面；Tavily 请求也显式排除这些域名。
+Rainforest 当前默认检索 `amazon.com`。ShopFlow 使用接口实际返回的币种，不做隐式汇率换算；当报价币种与任务币种不同，候选仍可查看，但不能加入预算方案。使用 Amazon 美国站报价时建议在工作台选择 USD。GBP 任务自动使用 `amazon.co.uk`。
+
+`data/catalog.json` 用于 demo、测试夹具和历史评测复现，不再是正式模式的主要商品来源。项目不抓取淘宝或京东商品页面。
 
 ## 测试与评测
 
@@ -124,7 +127,7 @@ python evaluate_agent.py --resume --max-calls 220 --output reports/agent-eval-v1
 # 固定 Provider 响应，适合持续回归，不调用外部 API
 python evaluate_search.py --fixture eval/search-provider-fixture.json --output reports/search-eval-fixture.json
 
-# 使用 .env 中配置的 Tavily，产生真实搜索请求
+# 使用 .env 中配置的 Rainforest，产生真实商品搜索请求
 python evaluate_search.py --output reports/search-eval-live.json
 ```
 

@@ -30,7 +30,7 @@ def result(ctx,name,value,args):
         category=args.get("category","")
         if ctx.t["scope"]=="real":
             history=(ctx.t.get("search_history") or [{}])[-1]
-            totals=(None,None,None);version="external:"+str(history.get("provider","unknown"));matching="external provider ranked results"
+            totals=(None,None,None);version="external:"+str(history.get("provider","unknown"));matching="product-page relevance filter"
         else:
             all_scope=core.search("demo");pool=[s for s in all_scope if s["offer"]["currency"]==currency]
             category_pool=[s for s in pool if not category or s["product"]["category"]==category]
@@ -39,19 +39,21 @@ def result(ctx,name,value,args):
             "currency":currency,"count_unit":"offers","catalog_version":version,
             "scope_total":totals[0],"total":totals[1],"category_total":totals[2],"matched":len(value),"returned":len(value),"truncated":False,
             "filters":{"category":category,"query":args.get("query","")},"matching":matching,
-            "interpretation":"returned describes only this query. Empty results do not prove that no suitable product exists.",
+            "received":getattr(ctx,"last_search",{}).get("received") if ctx.t["scope"]=="real" else len(value),
+            "rejected":getattr(ctx,"last_search",{}).get("rejected") if ctx.t["scope"]=="real" else 0,
+            "returned_currencies":getattr(ctx,"last_search",{}).get("currencies",[currency]),
+            "currency_mismatch":bool(getattr(ctx,"last_search",{}).get("currency_mismatch")),
+            "result_scope":"current_query_only",
             "evidence_required_before_plan":True,
             "offer_ids":[item["offer"]["id"] for item in value],
-            "next_action":"Choose only intended offers. In the next response call read_evidence for those IDs first, then set_plan in the same ordered tool_calls batch.",
             "category_fallback":bool(getattr(ctx,"last_search",{}) and ctx.last_search.get("category_fallback"))}
     if name=="get_task":return task_view(ctx.t)
     if name=="update_constraints" and isinstance(value,dict) and not value.get("error"):
         value["current_items"]=[{k:i[k] for k in ("offer_id","quantity","required")} for i in ctx.t["items"]]
-        value["side_effects"]="Owned/excluded filters and budget repair already applied; removed contains names, current_items contains remaining offer IDs."
+        value["constraints_applied"]=True
     if isinstance(value,dict) and value.get("ok") is False:
         value.setdefault("error_code","tool_validation_failed");value.setdefault("allowed_fields",[])
         value["recovery"]="Correct only the reported fields or prerequisite, then retry once; state is unchanged."
     if name in ("set_plan","commit_pending_plan","update_item","replace_item") and isinstance(value,dict) and "totals" in value:
         value["validation"]={"budget_checked":True,"compatibility_checked":True,"plan_staged":True,"committed":False,"purchase_confirmed":False}
-        value["next_action"]="Explain this validated result; check_plan is redundant unless state changes."
     return money_view(value,currency)

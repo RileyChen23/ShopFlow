@@ -37,7 +37,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.json_response({"csrf":self.session["csrf"],"tasks":[core.public_task(t) for t in tasks],
                     "preferences":store.preferences(self.owner),"mode":os.getenv("AGENT_MODE","offline"),
                     "test_lab":os.getenv("ENABLE_TEST_LAB")=="1",
-                    "integrations":{"model_configured":provider.configured(),"search_configured":search_provider.configured(),"search_provider":os.getenv("SEARCH_PROVIDER","tavily"),"shopify_configured":bool(os.getenv("SHOPIFY_STORE") and os.getenv("SHOPIFY_STOREFRONT_TOKEN") and os.getenv("SHOPIFY_TEST_STORE_ACK")=="1")},
+                    "integrations":{"model_configured":provider.configured(),"search_configured":search_provider.configured(),"search_provider":os.getenv("SEARCH_PROVIDER","rainforest"),"shopify_configured":bool(os.getenv("SHOPIFY_STORE") and os.getenv("SHOPIFY_STOREFRONT_TOKEN") and os.getenv("SHOPIFY_TEST_STORE_ACK")=="1")},
                     "catalog_version":core.catalog()["version"],"catalog_counts":{"verified":None,"fixtures":sum(p["kind"]=="fixture" for p in core.catalog()["products"])}})
             if p=="/api/catalog":return self.json_response({"demo":core.search("demo"),"real":[],"external":True,"provider":os.getenv("SEARCH_PROVIDER","tavily")})
             if p=="/api/runs":return self.json_response(store.runs(self.owner))
@@ -88,7 +88,7 @@ class Handler(BaseHTTPRequestHandler):
             if scope not in ("demo","real"):raise AppError("未知资料范围")
             t=core.fresh_task(self.owner,scope,store.preferences(self.owner))
             t["currency"]=b.get("currency","CNY")
-            if t["currency"] not in ("CNY","GBP"):raise AppError("未知规划币种")
+            if t["currency"] not in ("CNY","USD","GBP"):raise AppError("未知规划币种")
             return core.public_task(store.create_task(t))
         if path=="/api/demo-finish":return checkout.simulated_finish(self.owner,b["cart_id"])
         if path=="/api/jump":

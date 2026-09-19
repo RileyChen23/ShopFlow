@@ -9,6 +9,7 @@ let catalog = {demo: [], real: []};
 let busy = false;
 let cart = null;
 let replaceId = null;
+let deleteTargetId = null;
 
 const statusLabels = {
   "新的采购任务": "New list",
@@ -200,11 +201,11 @@ function workspace() {
   const title = task && task.title !== "新的采购任务" ? task.title : "New shopping list";
   return '<div class="workspace"><div class="workspace-head"><div><h2>' + esc(title) +
     '</h2></div><div class="scope-control"><button class="compact-new" data-action="new">＋ New</button>' +
-    (task ? '<button class="delete-task" data-action="delete-task">Delete</button>' : '') +
     '<select id="scope" aria-label="Shopping mode"><option value="real" ' +
     ((!task || task.scope === "real") ? "selected" : "") + '>Live</option><option value="demo" ' +
     (task?.scope === "demo" ? "selected" : "") + '>Demo</option></select>' +
     '<select id="currency" aria-label="Currency"><option value="CNY">CNY</option>' +
+    '<option value="USD" ' + (task?.currency === "USD" ? "selected" : "") + '>USD</option>' +
     '<option value="GBP" ' + (task?.currency === "GBP" ? "selected" : "") + '>GBP</option></select></div></div>' +
     '<div class="columns"><section class="conversation">' + conversationContent() +
     '<form class="composer" id="chat-form"><textarea id="message" aria-label="Shopping request" ' +
@@ -350,6 +351,7 @@ function showEntries(nextCart) {
 async function route(path, push = true) {
   if (push) history.pushState({}, "", path);
   document.body.classList.toggle("maintenance", /^\/(runs|evaluation)(\/|$)/.test(path));
+  document.body.classList.toggle("drawer-hidden", path !== "/");
   const title = path.startsWith("/runs") ? "Activity" :
     path.startsWith("/evaluation") ? "Evaluation" :
     path === "/lab" ? "Lab" : "Workspace";
@@ -410,15 +412,37 @@ function showPreferences() {
     '<button class="primary" data-action="save-preferences">Save</button>');
 }
 
-function showDeleteTask() {
-  if (!task) return;
+function showDeleteTask(taskId) {
+  const target = boot.tasks.find(item => item.id === taskId);
+  if (!target) return;
+  deleteTargetId = taskId;
   modal("Delete this conversation?",
-    "<p>This removes its messages, shopping plan, activity records, and checkout rehearsals from this device.</p>",
+    "<p>This removes <strong>" + esc(target.title === "新的采购任务" ? "New list" : target.title) +
+    "</strong> and its saved activity from this device.</p>",
     '<button data-action="close">Cancel</button>' +
     '<button class="danger-button" data-action="do-delete-task">Delete conversation</button>');
 }
 
+function hideHistoryMenu() {
+  const menu = $("#history-menu");
+  if (menu) menu.hidden = true;
+}
+
+document.addEventListener("contextmenu", event => {
+  const item = event.target.closest(".history-item");
+  if (!item) return;
+  event.preventDefault();
+  deleteTargetId = item.dataset.id;
+  const menu = $("#history-menu");
+  menu.hidden = false;
+  const width = 190, height = 48;
+  menu.style.left = Math.min(event.clientX, window.innerWidth - width - 8) + "px";
+  menu.style.top = Math.min(event.clientY, window.innerHeight - height - 8) + "px";
+  menu.querySelector("button").focus();
+});
+
 document.addEventListener("click", async event => {
+  if (!event.target.closest("#history-menu")) hideHistoryMenu();
   const navigation = event.target.closest("[data-nav]");
   if (navigation) {
     event.preventDefault();
@@ -436,15 +460,17 @@ document.addEventListener("click", async event => {
       await route("/");
     } else if (action === "example") await send(element.dataset.text);
     else if (action === "preferences") showPreferences();
-    else if (action === "delete-task") showDeleteTask();
+    else if (action === "delete-history") { hideHistoryMenu(); showDeleteTask(deleteTargetId); }
     else if (action === "do-delete-task") {
-      const deletedId = task.id;
+      const deletedId = deleteTargetId;
+      const target = deletedId === task?.id ? task : boot.tasks.find(item => item.id === deletedId);
+      if (!target) throw new Error("Conversation not found.");
       element.disabled = true;
-      await api("/api/delete-task", requestBody());
+      await api("/api/delete-task", {task_id: target.id, revision: target.revision});
       boot.tasks = boot.tasks.filter(item => item.id !== deletedId);
-      task = boot.tasks[0] || null;
-      if (task) localStorage.setItem("task", task.id);
-      else localStorage.removeItem("task");
+      if (task?.id === deletedId) task = boot.tasks[0] || null;
+      if (task) localStorage.setItem("task", task.id); else localStorage.removeItem("task");
+      deleteTargetId = null;
       cart = null;
       closeModal();
       await route("/", false);

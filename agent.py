@@ -52,11 +52,20 @@ class Context:
                 if self.t["scope"]=="real":
                     if not args["query"].strip():raise AppError("正式模式需要具体的外部搜索 query",400,"需求理解")
                     searcher=self.searcher or search_provider.get()
-                    batch=searcher.search(args["query"],min(int(os.getenv("SEARCH_MAX_RESULTS","5")),5))
+                    result_limit=min(int(os.getenv("SEARCH_MAX_RESULTS","5")),5)
+                    if isinstance(searcher,search_provider.RainforestSearchProvider):
+                        batch=searcher.search(args["query"],result_limit,self.t.get("currency","CNY"))
+                    else:batch=searcher.search(args["query"],result_limit)
                     result=search_provider.normalize(batch,args["category"],self.t.get("currency","CNY"))
                     core.cache_search(self.t,result,args["query"],batch.get("provider","unknown"),batch.get("request_id"),batch.get("credits"))
-                    event["provider"]={k:batch.get(k) for k in ("provider","request_id","credits")}
-                    self.last_search={"category":args["category"],"query":args["query"],"category_fallback":False}
+                    received=len(batch.get("results") or [])
+                    event["provider"]={k:batch.get(k) for k in ("provider","request_id","credits","account_credits_used","account_credits_remaining")}
+                    currencies=sorted({row["offer"]["currency"] for row in result})
+                    event["provider"].update({"received":received,"accepted":len(result),"rejected":max(0,received-len(result)),
+                        "currencies":currencies,"currency_mismatch":any(value!=self.t.get("currency","CNY") for value in currencies)})
+                    self.last_search={"category":args["category"],"query":args["query"],"category_fallback":False,
+                        "received":received,"accepted":len(result),"rejected":max(0,received-len(result)),"currencies":currencies,
+                        "currency_mismatch":any(value!=self.t.get("currency","CNY") for value in currencies)}
                 else:
                     result=[s for s in core.search("demo",args["category"],args["query"]) if s["offer"]["currency"]==self.t.get("currency","CNY")]
                     fallback=False
@@ -146,10 +155,10 @@ def state_fallback(ctx):
     totals=core.totals(ctx.t)
     if ctx.t["items"]:
         items="、".join(i["snapshot"]["product"]["name"]+" × "+str(i["quantity"]) for i in ctx.t["items"])
-        total="已知费用 "+totals["currency"]+" "+format(totals["known_total_minor"]/100,".2f")
-        unknown="；仍有未知价格、运费或库存，请核对来源" if totals["unknown"] else ""
-        return "方案已经过服务端校验并保留："+items+"；"+total+unknown+"。购买仍需你在界面明确确认。"
-    return "本轮修改已由服务端保存，当前方案为空。购买仍需你在界面明确确认。"
+        total="已知合计 "+totals["currency"]+" "+format(totals["known_total_minor"]/100,".2f")
+        unknown="；部分价格、运费或库存还需在商品页确认" if totals["unknown"] else ""
+        return "我已保留这份方案："+items+"；"+total+unknown+"。"
+    return "这次还没有找到合适的商品。你的预算和要求已经保留，可以继续调整条件或重新搜索。"
 
 def offline(ctx,text,pref):
     t=ctx.t
@@ -338,7 +347,7 @@ def run(t,text,pref,mode=None,version=None,fault=None):
     meta["tool_contract_version"]=tool_contracts.VERSION
     meta["tool_schema_sha256"]=hashlib.sha256(json.dumps(TOOLS,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
     meta["prompt_sha256"]=provenance.sha(ROOT/"prompts"/(meta["prompt_version"]+".txt"))
-    meta["data_snapshot"]=core.catalog() if t["scope"]!="real" else {"source":"external_search","provider":os.getenv("SEARCH_PROVIDER","tavily"),"task_cache_before":len(t.get("search_cache",{}))}
+    meta["data_snapshot"]=core.catalog() if t["scope"]!="real" else {"source":"external_search","provider":os.getenv("SEARCH_PROVIDER","rainforest"),"task_cache_before":len(t.get("search_cache",{}))}
     try:
         if mode not in ("live","offline"):raise AppError("未知执行模式",503,"配置")
         answer=live(ctx,text,pref,meta) if mode=="live" else offline(ctx,text,pref)

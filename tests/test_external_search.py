@@ -16,6 +16,18 @@ class ExternalSearchTests(unittest.TestCase):
         self.assertEqual(row["product"]["kind"],"external");self.assertIsNone(row["offer"]["price_minor"])
         self.assertEqual(row["offer"]["url"],row["product"]["evidence"][0]["url"])
         self.assertEqual(row["offer"]["captured_at"],"2026-09-09T00:00:00+00:00")
+    def test_rainforest_result_keeps_asin_price_image_and_source(self):
+        batch={"provider":"rainforest","amazon_domain":"amazon.com","max_results":5,"results":[{
+            "position":1,"asin":"B000TEST01","title":"Logitech K120 Wired Keyboard",
+            "link":"https://www.amazon.com/dp/B000TEST01","image":"https://m.media-amazon.com/test.jpg",
+            "price":{"value":79.9,"currency":"CNY","raw":"CN¥79.90"},"rating":4.5,"ratings_total":1200}]}
+        rows=search_provider.normalize(batch,"键盘","CNY","2026-09-19T00:00:00+00:00")
+        self.assertEqual(len(rows),1);row=rows[0]
+        self.assertEqual(row["variant"]["sku"],"B000TEST01")
+        self.assertEqual(row["offer"]["price_minor"],7990)
+        self.assertEqual(row["offer"]["currency"],"CNY")
+        self.assertEqual(row["product"]["image"],"https://m.media-amazon.com/test.jpg")
+        self.assertEqual(row["product"]["evidence"][0]["url"],row["offer"]["url"])
     def test_real_search_caches_then_existing_evidence_and_plan_tools_work(self):
         task=core.fresh_task("external","real");ctx=agent.Context(task,searcher=FakeProvider())
         rows=ctx.execute("search_products",{"category":"键盘","query":"wireless keyboard China"})
@@ -43,8 +55,8 @@ class ExternalSearchTests(unittest.TestCase):
         self.assertEqual(a["after"]["metrics"]["agent_task_success_rate"],1)
         self.assertEqual(a["after"]["metrics"]["hard_constraint_satisfaction_rate"],1)
     def test_missing_provider_key_is_explicit(self):
-        with patch.dict(os.environ,{"SEARCH_API_KEY":""}),self.assertRaises(core.AppError) as error:
-            search_provider.TavilySearchProvider().search("keyboard")
+        with patch.dict(os.environ,{"RAINFOREST_API_KEY":""}),self.assertRaises(core.AppError) as error:
+            search_provider.RainforestSearchProvider().search("keyboard")
         self.assertEqual(error.exception.category,"配置")
 
 if __name__=="__main__":unittest.main()
