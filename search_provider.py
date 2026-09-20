@@ -85,6 +85,13 @@ def _rainforest_excerpt(row):
     if isinstance(availability,dict) and availability.get("raw"):parts.append(str(availability["raw"]))
     return ". ".join(part for part in parts if part)[:1200]
 
+def _canonical_amazon_url(url,asin):
+    """Drop referral/search parameters while preserving a valid product page."""
+    safe=core.safe_link(url);parsed=urlparse(safe);host=(parsed.hostname or "").lower()
+    if host.startswith("amazon.") or host.startswith("www.amazon.") or ".amazon." in host:
+        return "https://"+host+"/dp/"+asin
+    return safe
+
 def _normalize_rainforest(batch,category,task_currency,collected_at):
     out=[];seen=set()
     for row in batch.get("results",[]):
@@ -93,7 +100,7 @@ def _normalize_rainforest(batch,category,task_currency,collected_at):
         title=str(row.get("title") or "").strip()[:300]
         url=row.get("link")
         if not asin or not title or not isinstance(url,str):continue
-        try:url=core.safe_link(url)
+        try:url=_canonical_amazon_url(url,asin)
         except core.AppError:continue
         key=hashlib.sha256((batch.get("amazon_domain","")+":"+asin).encode()).hexdigest()[:20]
         if key in seen:continue

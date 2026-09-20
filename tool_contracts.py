@@ -5,17 +5,19 @@ import core
 VERSION="agent-workflow-contract-v2"
 def offer_summary(snapshot,include_evidence=False):
     product=snapshot["product"];variant=snapshot["variant"];offer=snapshot["offer"]
-    value={"offer_id":offer["id"],"name":product["name"],"category":product["category"],
-        "spec":str(variant.get("spec") or "")[:360],"price_minor":offer.get("price_minor"),
-        "currency":offer.get("currency"),"merchant":offer.get("merchant"),"source_url":offer.get("url"),
-        "captured_at":offer.get("captured_at"),"stock":offer.get("stock"),
+    value={"offer_id":offer["id"],"name":str(product["name"])[:220],"category":product["category"],
+        "price_minor":offer.get("price_minor"),"currency":offer.get("currency"),
+        "merchant":offer.get("merchant"),"stock":offer.get("stock"),
         "rating":product.get("attributes",{}).get("rating"),
         "ratings_total":product.get("attributes",{}).get("ratings_total")}
     if include_evidence:
+        value["spec"]=str(variant.get("spec") or "")[:280]
+        value["source_url"]=offer.get("url")
+        value["captured_at"]=offer.get("captured_at")
         value["evidence"]=[{"fields":e.get("fields",[]),"url":e.get("url"),
-            "excerpt":str(e.get("excerpt") or "")[:600],"checked_at":e.get("checked_at")}
-            for e in product.get("evidence",[])[:3]]
-        value["limitations"]=product.get("limitations",[])[:5]
+            "excerpt":str(e.get("excerpt") or "")[:420],"checked_at":e.get("checked_at")}
+            for e in product.get("evidence",[])[:1]]
+        value["limitations"]=product.get("limitations",[])[:3]
     return value
 def money_view(value,currency="CNY"):
     if isinstance(value,list):return [money_view(x,currency) for x in value]

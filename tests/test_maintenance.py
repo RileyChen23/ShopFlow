@@ -49,3 +49,5 @@ class MaintenanceTests(unittest.TestCase):
         self.assertIn('rel="noopener"',app)
         self.assertIn("Recent shopping",app)
         self.assertIn("Add from results",app)
+        self.assertIn("const optimistic = {...task",app)
+        self.assertIn("messages: [...task.messages",app)

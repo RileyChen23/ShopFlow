@@ -361,8 +361,15 @@ async function send(message, fault) {
   busy = true;
   try {
     if (!task) await create($("#scope")?.value || "real", $("#currency")?.value || "USD");
+    const text = message.trim();
+    const payload = requestBody({text, fault});
+    const optimistic = {...task,
+      title: task.messages.length ? task.title : text.slice(0, 32),
+      messages: [...task.messages, {role: "user", content: text}]
+    };
+    saveLocal(optimistic);
     render();
-    saveLocal(await api(fault ? "/api/lab/chat" : "/api/chat", requestBody({text: message, fault})));
+    saveLocal(await api(fault ? "/api/lab/chat" : "/api/chat", payload));
     cart = null;
   } catch (error) {
     notice(error.message, "error");

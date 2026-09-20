@@ -145,6 +145,17 @@ class BadcaseContracts(unittest.TestCase):
       _,trace=agent.run(t(),"plan",{},mode="live")
     self.assertTrue(seen[0]["tools"]);self.assertEqual(seen[1]["tools"],[])
     self.assertEqual(trace["model_calls"],2);self.assertEqual(len(trace["retries"]),1)
+ def test_large_parallel_tool_batch_is_split_without_failing_turn(self):
+    calls=[{"id":"check-"+str(i),"type":"function","function":{"name":"check_plan","arguments":"{}"}} for i in range(9)]
+    first={"choices":[{"message":{"role":"assistant","content":None,"tool_calls":calls},"finish_reason":"tool_calls"}],
+      "usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2,"prompt_cache_hit_tokens":0,"prompt_cache_miss_tokens":1}}
+    with patch.dict(os.environ,{"LLM_MAX_CALLS":"2"}),patch.object(agent,"post_json",side_effect=[first,response(answer="Done.")]):
+      task,trace=agent.run(t(),"Check the current plan.",{},mode="live")
+    self.assertEqual(task["messages"][-1]["content"],"Done.")
+    self.assertEqual(trace["tool_calls"],8)
+    self.assertEqual(len(trace["events"]),9)
+    self.assertEqual(trace["events"][-1]["status"],"skipped")
+    self.assertEqual(trace["events"][-1]["model_result"]["error_code"],"tool_batch_limit")
  def test_insufficient_case_budget_does_not_call_model(self):
     case={"id":"TEST","name":"two turns","split":"development","messages":["one","two"],"expected":{}}
     with patch.object(agent,"run") as run:

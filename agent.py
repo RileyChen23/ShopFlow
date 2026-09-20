@@ -339,8 +339,8 @@ def _live(ctx,text,pref,meta):
                 if url not in allowed:raise AppError("回复包含未绑定来源链接；方案未提交",502,"资料缺失")
             return answer[:5000]
         if final_only:raise AppError("最后回复额度不允许执行工具；本轮方案未提交",429,"终止条件")
-        if len(calls)>8:raise AppError("单次工具数量超过限制",429,"依赖故障")
-        for call in calls:
+        if len(calls)>20:raise AppError("单次工具数量超过限制",429,"依赖故障")
+        for position,call in enumerate(calls):
             if time.monotonic()>deadline:raise AppError("本轮总耗时超限",504,"依赖故障")
             try:
                 name=call["function"]["name"];ident=call["id"]
@@ -349,6 +349,13 @@ def _live(ctx,text,pref,meta):
                 except (ValueError,TypeError):args=None # Schema error is returned as a bounded tool result.
             except (ValueError,KeyError,TypeError):
                 raise AppError("模型工具参数不符合协议",502,"需求理解")
+            if position>=8:
+                wire={"ok":False,"error_code":"tool_batch_limit","state_unchanged":True,
+                    "recovery":"This call was not executed. Continue it in the next model turn only if still needed."}
+                ctx.events.append({"tool":name,"input":store.redact(args or {}),"started_at":now(),"ended_at":now(),
+                    "ms":0,"status":"skipped","category":"tool_batch_limit","call_id":ident,"model_result":wire})
+                messages.append({"role":"tool","tool_call_id":ident,"content":json.dumps(wire,ensure_ascii=False)})
+                continue
             try:result=ctx.execute(name,args)
             except AppError as e:
                 if ctx.tools>min(int(os.getenv("LLM_MAX_TOOLS","20")),30):raise

@@ -35,13 +35,14 @@ class ExternalSearchTests(unittest.TestCase):
     def test_rainforest_result_keeps_asin_price_image_and_source(self):
         batch={"provider":"rainforest","amazon_domain":"amazon.com","max_results":5,"results":[{
             "position":1,"asin":"B000TEST01","title":"Logitech K120 Wired Keyboard",
-            "link":"https://www.amazon.com/dp/B000TEST01","image":"https://m.media-amazon.com/test.jpg",
+            "link":"https://www.amazon.com/Logitech-Keyboard/dp/B000TEST01/ref=sr_1_1?keywords=keyboard","image":"https://m.media-amazon.com/test.jpg",
             "price":{"value":79.9,"currency":"CNY","raw":"CN¥79.90"},"rating":4.5,"ratings_total":1200}]}
         rows=search_provider.normalize(batch,"键盘","CNY","2026-09-19T00:00:00+00:00")
         self.assertEqual(len(rows),1);row=rows[0]
         self.assertEqual(row["variant"]["sku"],"B000TEST01")
         self.assertEqual(row["offer"]["price_minor"],7990)
         self.assertEqual(row["offer"]["currency"],"CNY")
+        self.assertEqual(row["offer"]["url"],"https://www.amazon.com/dp/B000TEST01")
         self.assertEqual(row["product"]["image"],"https://m.media-amazon.com/test.jpg")
         self.assertEqual(row["product"]["evidence"][0]["url"],row["offer"]["url"])
     def test_real_search_caches_then_existing_evidence_and_plan_tools_work(self):
@@ -72,7 +73,11 @@ class ExternalSearchTests(unittest.TestCase):
         self.assertFalse(ctx.last_search["currency_mismatch"])
         wire=tool_contracts.result(ctx,"search_products",list(task["search_cache"].values()),{"category":"","query":"A5 notebook"})
         self.assertIn("offer_id",wire["items"][0]);self.assertNotIn("product",wire["items"][0])
-        self.assertLess(len(json.dumps(wire)),8000)
+        self.assertNotIn("source_url",wire["items"][0]);self.assertNotIn("spec",wire["items"][0])
+        self.assertLess(len(json.dumps(wire)),3000)
+        evidence=ctx.execute("read_evidence",{"offer_id":wire["items"][0]["offer_id"]})
+        evidence_wire=tool_contracts.result(ctx,"read_evidence",evidence,{"offer_id":wire["items"][0]["offer_id"]})
+        self.assertIn("source_url",evidence_wire);self.assertIn("spec",evidence_wire)
     def test_explicit_budget_keeps_currency_and_blocks_mixed_plan(self):
         task=core.fresh_task("external","real");task["currency"]="CNY";task["budget_minor"]=10000
         ctx=agent.Context(task,searcher=FakeRainforest())
