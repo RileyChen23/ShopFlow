@@ -190,6 +190,8 @@ def make_items(t, lines):
         out.append({"offer_id":oid,"quantity":integer(row["quantity"],1,99),
                     "required":row.get("required",True),"reason":str(row.get("reason","手动选择，请核实用途"))[:500],
                     "snapshot":s})
+    if out and not any(item["required"] for item in out):
+        raise AppError("方案至少需要一个明确首选；对比备选不要作为同时购买项加入方案",category="推荐约束")
     return out
 
 def set_plan(t,lines):

@@ -124,6 +124,13 @@ class APITests(unittest.TestCase):
     def test_real_task_accepts_usd_for_amazon_results(self):
         status,t=self.c.post("/api/tasks",{"scope":"real","currency":"USD"})
         self.assertEqual(status,200);self.assertEqual(t["currency"],"USD")
+    def test_real_task_defaults_to_usd(self):
+        status,t=self.c.post("/api/tasks",{"scope":"real"})
+        self.assertEqual(status,200);self.assertEqual(t["currency"],"USD")
+    def test_plan_requires_a_primary_choice(self):
+        t=task()
+        with self.assertRaises(core.AppError):
+            core.set_plan(t,[{"offer_id":"test-kbd1-o","quantity":1,"required":False,"reason":"alternative"}])
     def test_session_isolation(self):
         t=self.c.new();other=Client(self.base)
         self.assertEqual(other.request("/api/task/"+t["id"])[0],404)

@@ -84,7 +84,7 @@ python server.py
 
 正式模式使用可插拔 Search Provider，当前实现为 [Rainforest Product Data API](https://docs.trajectdata.com/rainforestapi/product-data-api/overview)。模型根据需求生成查询词，Provider 从 Amazon 商品搜索返回 ASIN、标题、商品链接、图片和可用报价，服务端统一补充采集时间并形成任务级商品证据。报价缺失时价格保持为 `null`。
 
-Rainforest 当前默认检索 `amazon.com`。ShopFlow 使用接口实际返回的币种，不做隐式汇率换算；当报价币种与任务币种不同，候选仍可查看，但不能加入预算方案。使用 Amazon 美国站报价时建议在工作台选择 USD。GBP 任务自动使用 `amazon.co.uk`。
+Rainforest 当前默认检索 `amazon.com`，因此正式任务默认使用 USD。ShopFlow 使用接口实际返回的币种，不做隐式汇率换算；当报价币种与任务币种不同，候选仍可查看，但不能加入预算方案。GBP 任务自动使用 `amazon.co.uk`，Demo 任务继续使用 CNY。
 
 `data/catalog.json` 用于 demo、测试夹具和历史评测复现，不再是正式模式的主要商品来源。项目不抓取淘宝或京东商品页面。
 

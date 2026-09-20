@@ -87,7 +87,7 @@ class Handler(BaseHTTPRequestHandler):
             scope=b.get("scope","real")
             if scope not in ("demo","real"):raise AppError("未知资料范围")
             t=core.fresh_task(self.owner,scope,store.preferences(self.owner))
-            t["currency"]=b.get("currency","CNY")
+            t["currency"]=b.get("currency","USD" if scope=="real" else "CNY")
             if t["currency"] not in ("CNY","USD","GBP"):raise AppError("未知规划币种")
             return core.public_task(store.create_task(t))
         if path=="/api/demo-finish":return checkout.simulated_finish(self.owner,b["cart_id"])

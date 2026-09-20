@@ -105,10 +105,12 @@ const money = (value, currency = task?.currency || "CNY") =>
     : new Intl.NumberFormat("en-US", {style: "currency", currency}).format(value / 100);
 const labelStatus = value => statusLabels[value] || value || "Not recorded";
 
-function notice(message) {
-  $("#notice").textContent = message;
-  $("#notice").hidden = false;
-  setTimeout(() => $("#notice").hidden = true, 7000);
+function notice(message, type = "info") {
+  const element = $("#notice");
+  element.textContent = message;
+  element.classList.toggle("error", type === "error");
+  element.hidden = false;
+  setTimeout(() => element.hidden = true, 7000);
 }
 
 async function api(path, payload) {
@@ -139,7 +141,7 @@ function requestBody(extra = {}) {
   return {task_id: task.id, revision: task.revision, ...extra};
 }
 
-async function create(scope = "real", currency = "CNY") {
+async function create(scope = "real", currency = "USD") {
   saveLocal(await api("/api/tasks", {scope, currency}));
   cart = null;
   render();
@@ -303,8 +305,9 @@ function workspace() {
     '<select id="scope" aria-label="Shopping mode"><option value="real" ' +
     ((!task || task.scope === "real") ? "selected" : "") + '>Live</option><option value="demo" ' +
     (task?.scope === "demo" ? "selected" : "") + '>Demo</option></select>' +
-    '<select id="currency" aria-label="Currency"><option value="CNY">CNY</option>' +
-    '<option value="USD" ' + (task?.currency === "USD" ? "selected" : "") + '>USD</option>' +
+    '<select id="currency" aria-label="Currency"><option value="USD" ' +
+    ((!task || task.currency === "USD") ? "selected" : "") + '>USD</option>' +
+    '<option value="CNY" ' + (task?.currency === "CNY" ? "selected" : "") + '>CNY</option>' +
     '<option value="GBP" ' + (task?.currency === "GBP" ? "selected" : "") + '>GBP</option></select></div></div>' +
     '<div class="columns ' + (task?.messages.length ? "active-chat" : "landing") +
     '"><section class="conversation">' + conversationContent() +
@@ -357,12 +360,12 @@ async function send(message, fault) {
   if (busy || !message.trim()) return;
   busy = true;
   try {
-    if (!task) await create($("#scope")?.value || "real", $("#currency")?.value || "CNY");
+    if (!task) await create($("#scope")?.value || "real", $("#currency")?.value || "USD");
     render();
     saveLocal(await api(fault ? "/api/lab/chat" : "/api/chat", requestBody({text: message, fault})));
     cart = null;
   } catch (error) {
-    notice(error.message);
+    notice(error.message, "error");
     if (task) saveLocal(await api("/api/task/" + task.id));
   } finally {
     busy = false;
@@ -673,7 +676,7 @@ document.addEventListener("click", async event => {
       notice("Checkout test finished.");
     }
   } catch (error) {
-    notice(error.message);
+    notice(error.message, "error");
     if (element.isConnected) element.disabled = false;
     if (error.status === 409 && task) {
       saveLocal(await api("/api/task/" + task.id));
@@ -698,7 +701,7 @@ document.addEventListener("submit", async event => {
       render();
     }
   } catch (error) {
-    notice(error.message);
+    notice(error.message, "error");
   }
 });
 
@@ -709,7 +712,7 @@ document.addEventListener("change", async event => {
       const currency = scope === "demo" ? "CNY" : $("#currency").value;
       await create(scope, currency);
     } catch (error) {
-      notice(error.message);
+      notice(error.message, "error");
     }
   }
 });

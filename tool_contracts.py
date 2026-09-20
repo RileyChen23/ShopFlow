@@ -3,6 +3,20 @@ import copy
 from decimal import Decimal
 import core
 VERSION="agent-workflow-contract-v2"
+def offer_summary(snapshot,include_evidence=False):
+    product=snapshot["product"];variant=snapshot["variant"];offer=snapshot["offer"]
+    value={"offer_id":offer["id"],"name":product["name"],"category":product["category"],
+        "spec":str(variant.get("spec") or "")[:360],"price_minor":offer.get("price_minor"),
+        "currency":offer.get("currency"),"merchant":offer.get("merchant"),"source_url":offer.get("url"),
+        "captured_at":offer.get("captured_at"),"stock":offer.get("stock"),
+        "rating":product.get("attributes",{}).get("rating"),
+        "ratings_total":product.get("attributes",{}).get("ratings_total")}
+    if include_evidence:
+        value["evidence"]=[{"fields":e.get("fields",[]),"url":e.get("url"),
+            "excerpt":str(e.get("excerpt") or "")[:600],"checked_at":e.get("checked_at")}
+            for e in product.get("evidence",[])[:3]]
+        value["limitations"]=product.get("limitations",[])[:5]
+    return value
 def money_view(value,currency="CNY"):
     if isinstance(value,list):return [money_view(x,currency) for x in value]
     if not isinstance(value,dict):return value
@@ -27,6 +41,7 @@ def result(ctx,name,value,args):
     value=copy.deepcopy(value)
     currency=ctx.t.get("currency","CNY")
     if name=="search_products" and isinstance(value,list):
+        compact_items=[offer_summary(item) for item in value]
         category=args.get("category","")
         if ctx.t["scope"]=="real":
             history=(ctx.t.get("search_history") or [{}])[-1]
@@ -35,7 +50,7 @@ def result(ctx,name,value,args):
             all_scope=core.search("demo");pool=[s for s in all_scope if s["offer"]["currency"]==currency]
             category_pool=[s for s in pool if not category or s["product"]["category"]==category]
             totals=(len(all_scope),len(pool),len(category_pool));version=core.catalog()["version"];matching="fixture text match"
-        value={"items":value,"scope":ctx.t["scope"],"source":"external_search" if ctx.t["scope"]=="real" else "demo_fixture",
+        value={"items":compact_items,"scope":ctx.t["scope"],"source":"external_search" if ctx.t["scope"]=="real" else "demo_fixture",
             "currency":currency,"count_unit":"offers","catalog_version":version,
             "scope_total":totals[0],"total":totals[1],"category_total":totals[2],"matched":len(value),"returned":len(value),"truncated":False,
             "filters":{"category":category,"query":args.get("query","")},"matching":matching,
@@ -43,10 +58,14 @@ def result(ctx,name,value,args):
             "rejected":getattr(ctx,"last_search",{}).get("rejected") if ctx.t["scope"]=="real" else 0,
             "returned_currencies":getattr(ctx,"last_search",{}).get("currencies",[currency]),
             "currency_mismatch":bool(getattr(ctx,"last_search",{}).get("currency_mismatch")),
+            "currency_adjusted_from":getattr(ctx,"last_search",{}).get("currency_adjusted_from"),
+            "currency_adjusted_to":getattr(ctx,"last_search",{}).get("currency_adjusted_to"),
             "result_scope":"current_query_only",
             "evidence_required_before_plan":True,
             "offer_ids":[item["offer"]["id"] for item in value],
             "category_fallback":bool(getattr(ctx,"last_search",{}) and ctx.last_search.get("category_fallback"))}
+    if name=="read_evidence" and isinstance(value,dict) and {"product","variant","offer"}<=set(value):
+        value=offer_summary(value,include_evidence=True)
     if name=="get_task":return task_view(ctx.t)
     if name=="update_constraints" and isinstance(value,dict) and not value.get("error"):
         value["current_items"]=[{k:i[k] for k in ("offer_id","quantity","required")} for i in ctx.t["items"]]
@@ -55,5 +74,9 @@ def result(ctx,name,value,args):
         value.setdefault("error_code","tool_validation_failed");value.setdefault("allowed_fields",[])
         value["recovery"]="Correct only the reported fields or prerequisite, then retry once; state is unchanged."
     if name in ("set_plan","commit_pending_plan","update_item","replace_item") and isinstance(value,dict) and "totals" in value:
+        value["items"]=[{"offer_id":item["offer_id"],"quantity":item["quantity"],"required":item["required"],
+            "reason":item["reason"],"name":item["snapshot"]["product"]["name"],
+            "price_minor":item["snapshot"]["offer"].get("price_minor"),
+            "currency":item["snapshot"]["offer"].get("currency")} for item in value.get("items",[])]
         value["validation"]={"budget_checked":True,"compatibility_checked":True,"plan_staged":True,"committed":False,"purchase_confirmed":False}
     return money_view(value,currency)

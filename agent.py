@@ -24,7 +24,7 @@ SCHEMAS["commit_pending_plan"]={"type":"object","properties":{},"additionalPrope
 class Context:
     def __init__(self,t,version="v2",fault=None,pref=None,searcher=None,target_categories=None,mutation_kind=None):
         self.t=t;self.version=version;self.events=[];self.read={i["offer_id"] for i in t["items"]};self.read_this_turn=set();self.fault=fault;self.tools=0;self.pref=pref or {};self.searcher=searcher
-        self.target_categories=set(target_categories or []);self.mutation_kind=mutation_kind;self.search_results={};self.last_search=None;self.pending_plan=None;self.plan_updated=False;self.last_plan_result=None
+        self.target_categories=set(target_categories or []);self.mutation_kind=mutation_kind;self.search_results={};self.last_search=None;self.pending_plan=None;self.plan_updated=False;self.last_plan_result=None;self.currency_blocked=None
     def recover_pending_plan(self):
         if not self.pending_plan:return None
         missing=[i["offer_id"] for i in self.pending_plan if i["offer_id"] not in self.read]
@@ -61,11 +61,19 @@ class Context:
                     received=len(batch.get("results") or [])
                     event["provider"]={k:batch.get(k) for k in ("provider","request_id","credits","account_credits_used","account_credits_remaining")}
                     currencies=sorted({row["offer"]["currency"] for row in result})
+                    requested_currency=self.t.get("currency","CNY")
+                    adjusted_from=None
+                    if len(currencies)==1 and currencies[0]!=requested_currency and not self.t.get("items") and self.t.get("budget_minor") is None:
+                        adjusted_from=requested_currency;self.t["currency"]=currencies[0]
+                    mismatch=any(value!=self.t.get("currency","CNY") for value in currencies)
+                    self.currency_blocked={"task_currency":self.t.get("currency","CNY"),"offer_currencies":currencies} if mismatch else None
                     event["provider"].update({"received":received,"accepted":len(result),"rejected":max(0,received-len(result)),
-                        "currencies":currencies,"currency_mismatch":any(value!=self.t.get("currency","CNY") for value in currencies)})
+                        "currencies":currencies,"currency_mismatch":mismatch,"currency_adjusted_from":adjusted_from,
+                        "currency_adjusted_to":self.t.get("currency","CNY") if adjusted_from else None})
                     self.last_search={"category":args["category"],"query":args["query"],"category_fallback":False,
                         "received":received,"accepted":len(result),"rejected":max(0,received-len(result)),"currencies":currencies,
-                        "currency_mismatch":any(value!=self.t.get("currency","CNY") for value in currencies)}
+                        "currency_mismatch":mismatch,"currency_adjusted_from":adjusted_from,
+                        "currency_adjusted_to":self.t.get("currency","CNY") if adjusted_from else None}
                 else:
                     result=[s for s in core.search("demo",args["category"],args["query"]) if s["offer"]["currency"]==self.t.get("currency","CNY")]
                     fallback=False
@@ -151,14 +159,23 @@ def workflow_tools(ctx):
             if tool["function"]["name"]=="search_products":tool["function"]["parameters"]["properties"]["category"]["enum"]=sorted(remaining_categories)
     return tools
 
-def state_fallback(ctx):
+def prefers_chinese(text):
+    """Match the latest user message language without changing the UI locale."""
+    return bool(re.search(r"[\u3400-\u9fff]",text or ""))
+
+def state_fallback(ctx,text=""):
     totals=core.totals(ctx.t)
     if ctx.t["items"]:
         items=", ".join(i["snapshot"]["product"]["name"]+" × "+str(i["quantity"]) for i in ctx.t["items"])
         total=totals["currency"]+" "+format(totals["known_total_minor"]/100,".2f")
+        if prefers_chinese(text):
+            unknown="。部分价格、运费或库存仍需在商品页确认" if totals["unknown"] else ""
+            return "已将以下商品加入购物方案："+items+"。已知合计："+total+unknown+"。"
         unknown=" Some prices, shipping costs, or stock details still need confirmation on the product page." if totals["unknown"] else ""
         return "I've added this to your shopping plan: "+items+". Known total: "+total+"."+unknown
-    return "I couldn’t find a suitable product this time. I’ve kept your budget and preferences so we can adjust the request and try again."
+    if prefers_chinese(text):
+        return "这次没有找到合适的在售商品。你可以补充品牌、规格或预算，我会按新条件继续找。"
+    return "I couldn't find a suitable product this time. Add a brand, specification, or budget and I'll search again."
 
 def commit_ranked_draft(ctx,text):
     """Last-step recovery: turn ranked search evidence into an editable first draft."""
@@ -173,9 +190,9 @@ def commit_ranked_draft(ctx,text):
             try:
                 snap=core.snapshot(offer_id,ctx.t)
                 if snap["offer"].get("currency")!=ctx.t.get("currency","CNY"):continue
-                ctx.execute("read_evidence",{"offer_id":offer_id})
-                ctx.execute("set_plan",{"items":[{"offer_id":offer_id,"quantity":quantity,"required":True,
-                    "reason":"Best current match from the verified search results; adjust or replace it as needed."}]})
+                if offer_id not in ctx.read:ctx.execute("read_evidence",{"offer_id":offer_id})
+                reason="当前结果中最符合需求的选择，可继续调整或替换。" if prefers_chinese(text) else "Best current match; adjust or replace it as needed."
+                ctx.execute("set_plan",{"items":[{"offer_id":offer_id,"quantity":quantity,"required":True,"reason":reason}]})
                 return True
             except AppError:continue
     return False
@@ -285,12 +302,15 @@ def _live(ctx,text,pref,meta):
         remaining=max_calls-meta["model_calls"]
         tools=workflow_tools(ctx)
         last_tool_recovery=bool(ctx.pending_plan or ctx.read_this_turn or ctx.search_results)
-        plan_needed=bool(ctx.search_results) and not ctx.plan_updated
-        final_only=ctx.plan_updated or (remaining<=1 and not plan_needed)
+        plan_needed=bool(ctx.search_results) and not ctx.plan_updated and not ctx.currency_blocked
+        final_only=ctx.plan_updated or bool(ctx.currency_blocked) or (remaining<=1 and not plan_needed)
         if ctx.plan_updated:final_only=True
         meta["reserve_final_response"]=not last_tool_recovery
         if final_only:
-            messages.append({"role":"system","content":"Last permitted request: no more tool execution. Explain only actual staged state or ask a necessary question; never claim an unbuilt plan is complete."})
+            instruction="Last permitted request: no more tool execution. Explain only actual staged state or ask a necessary question; never claim an unbuilt plan is complete."
+            if ctx.currency_blocked:
+                instruction+=" The products found use "+", ".join(ctx.currency_blocked["offer_currencies"])+" while this task uses "+ctx.currency_blocked["task_currency"]+". Ask the customer to switch the task currency; do not describe internal tools or retry steps."
+            messages.append({"role":"system","content":instruction})
         response=provider.request(messages,[] if final_only else tools,meta,post_json,deadline)
         final_only=final_only or meta["model_events"][-1].get("final_response_only",False)
         meta["model_events"][-1]["final_response_only"]=final_only
@@ -347,7 +367,16 @@ def _live(ctx,text,pref,meta):
                     messages.append({"role":"system","content":json.dumps({"controller_event":"pending_plan_committed","result":recovery},ensure_ascii=False)})
     if ctx.plan_updated:
         meta["fallback"]={"type":"validated_state_summary","reason":"model_call_limit_after_successful_state_update"}
-        return state_fallback(ctx)
+        return state_fallback(ctx,text)
+    if ctx.search_results and not ctx.currency_blocked and commit_ranked_draft(ctx,text):
+        meta["fallback"]={"type":"ranked_draft_recovery","reason":"model_call_limit_after_search"}
+        return state_fallback(ctx,text)
+    if ctx.currency_blocked:
+        meta["fallback"]={"type":"currency_choice_required","reason":"offer_currency_does_not_match_task"}
+        offered=", ".join(ctx.currency_blocked["offer_currencies"])
+        if prefers_chinese(text):
+            return "找到了以 "+offered+" 标价的合适商品，但当前清单使用 "+ctx.currency_blocked["task_currency"]+"。将清单币种切换为 "+offered+" 后，我就能把最合适的商品加入方案。"
+        return "I found suitable products priced in "+offered+", while this list uses "+ctx.currency_blocked["task_currency"]+". Switch the list currency to "+offered+" and I can add the best match to your plan."
     raise AppError("达到工具循环上限；本轮方案未提交",429,"依赖故障")
 
 def live(ctx,text,pref,meta):
@@ -356,7 +385,7 @@ def live(ctx,text,pref,meta):
         if not ctx.plan_updated:raise
         meta["fallback"]={"type":"validated_state_summary","reason":"final_response_failed_after_successful_state_update","error_category":error.category}
         meta["response_failure"]={"message":str(error),"category":error.category}
-        return state_fallback(ctx)
+        return state_fallback(ctx,text)
 
 def run(t,text,pref,mode=None,version=None,fault=None):
     version=version or os.getenv("STRATEGY_VERSION","v2")
