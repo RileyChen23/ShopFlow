@@ -24,6 +24,10 @@ class BadcaseContracts(unittest.TestCase):
     self.assertEqual(view["offer"]["amounts"]["price_minor"]["display"],"USD 12.99")
     self.assertIsNone(view["offer"]["amounts"]["shipping_minor"]["major_units"])
     self.assertEqual(view["amounts"]["zero_minor"]["major_units"],"0.00");self.assertEqual(source,original)
+ def test_unknown_shipping_is_not_presented_as_zero(self):
+    task=t();core.set_plan(task,[line()]);ctx=agent.Context(task)
+    answer=agent.correct_unknown_cost_wording("商品共 CNY 159，运费暂按 $0 计。",ctx)
+    self.assertIn("已知商品小计",answer);self.assertNotIn("按 $0",answer)
  def test_search_scope_counts_do_not_equal_subset(self):
     class Searcher:
       def search(self,q,n):return {"provider":"test","request_id":"r","credits":0,"results":[{"title":"K1","url":"https://example.com/k1","content":"wireless USB keyboard"}]}
@@ -73,7 +77,8 @@ class BadcaseContracts(unittest.TestCase):
     self.assertNotIn("search_products",names);self.assertIn("read_evidence",names);self.assertIn("set_plan",names)
     two=agent.Context(t(),target_categories=["键盘","台灯"]);two.execute("search_products",{"category":"键盘","query":"键盘"})
     search=next(x for x in agent.workflow_tools(two) if x["function"]["name"]=="search_products")
-    self.assertEqual(search["function"]["parameters"]["properties"]["category"]["enum"],["台灯"])
+    category_schema=search["function"]["parameters"]["properties"]["category"]
+    self.assertNotIn("enum",category_schema);self.assertIn("台灯",search["function"]["description"])
  def test_existing_plan_routes_to_state_patch_tools(self):
     task=t();core.set_plan(task,[line(),line("test-lamp1-o")])
     kinds={"键盘数量改成2把":"quantity","换成蓝牙键盘":"replacement","台灯先不买，预算降到200元":"prune"}

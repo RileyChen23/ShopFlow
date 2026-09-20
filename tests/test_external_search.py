@@ -73,7 +73,7 @@ class ExternalSearchTests(unittest.TestCase):
         self.assertFalse(ctx.last_search["currency_mismatch"])
         wire=tool_contracts.result(ctx,"search_products",list(task["search_cache"].values()),{"category":"","query":"A5 notebook"})
         self.assertIn("offer_id",wire["items"][0]);self.assertNotIn("product",wire["items"][0])
-        self.assertNotIn("source_url",wire["items"][0]);self.assertNotIn("spec",wire["items"][0])
+        self.assertEqual(wire["items"][0]["source_url"],"https://www.amazon.com/dp/B000USD001");self.assertNotIn("spec",wire["items"][0])
         self.assertLess(len(json.dumps(wire)),3000)
         evidence=ctx.execute("read_evidence",{"offer_id":wire["items"][0]["offer_id"]})
         evidence_wire=tool_contracts.result(ctx,"read_evidence",evidence,{"offer_id":wire["items"][0]["offer_id"]})
@@ -88,6 +88,38 @@ class ExternalSearchTests(unittest.TestCase):
         task=core.fresh_task("external","real");ctx=agent.Context(task,searcher=FakeProvider())
         with patch.object(core,"search",side_effect=AssertionError("local catalog used")):
             self.assertTrue(ctx.execute("search_products",{"category":"键盘","query":"keyboard"}))
+
+    def test_real_search_accepts_open_product_categories(self):
+        task=core.fresh_task("open-category","real");ctx=agent.Context(task,searcher=FakeProvider())
+        rows=ctx.execute("search_products",{"category":"桌面置物架","query":"compact desk shelf black"})
+        self.assertEqual(rows[0]["product"]["category"],"桌面置物架")
+        self.assertNotIn("enum",agent.SCHEMAS["search_products"]["properties"]["category"])
+        self.assertIn("search_products",{tool["function"]["name"] for tool in agent.workflow_tools(ctx)})
+
+    def test_recovery_builds_one_preferred_item_per_searched_category(self):
+        class MultiProvider:
+            def search(self,query,max_results=5):
+                slug="lamp" if "lamp" in query else "shelf"
+                return {"provider":"fake","results":[{"title":slug.title(),"url":"https://shop.example.com/"+slug,"content":slug+" price $10"}]}
+        task=core.fresh_task("multi-recovery","real");task["currency"]="USD"
+        ctx=agent.Context(task,searcher=MultiProvider(),target_categories=["台灯","置物架"])
+        ctx.execute("search_products",{"category":"台灯","query":"lamp"})
+        ctx.execute("search_products",{"category":"置物架","query":"shelf"})
+        self.assertTrue(agent.commit_ranked_draft(ctx,"每种买 2 个"))
+        self.assertEqual({item["snapshot"]["product"]["category"] for item in task["items"]},{"台灯","置物架"})
+        self.assertTrue(all(item["quantity"]==2 for item in task["items"]))
+
+    def test_multi_category_plan_rejects_omitting_available_category(self):
+        class MultiProvider:
+            def search(self,query,max_results=5):
+                return {"provider":"fake","results":[{"title":query,"url":"https://shop.example.com/"+query,"content":query}]}
+        task=core.fresh_task("complete-plan","real");ctx=agent.Context(task,searcher=MultiProvider(),target_categories=["台灯","置物架"])
+        lamp=ctx.execute("search_products",{"category":"台灯","query":"lamp"})[0]["offer"]["id"]
+        ctx.execute("search_products",{"category":"置物架","query":"shelf"})
+        ctx.execute("read_evidence",{"offer_id":lamp})
+        with self.assertRaises(core.AppError) as raised:
+            ctx.execute("set_plan",{"items":[{"offer_id":lamp,"quantity":1,"required":True,"reason":"best"}]})
+        self.assertEqual(raised.exception.details["error_code"],"target_category_missing")
     def test_search_failure_rolls_back_cache(self):
         class Broken:
             def search(self,*args):raise core.AppError("provider down",502,"检索")

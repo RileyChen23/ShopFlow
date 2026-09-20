@@ -27,10 +27,11 @@ def request(messages,tools,meta,post,deadline):
         if final_only and tools:
             effective_messages=messages+[{"role":"system","content":"Last request after retries: no tools; explain actual state or missing information only."}]
         body=payload(effective_messages,[] if final_only else tools)
-        if len(json.dumps(body,ensure_ascii=False).encode())>60000:raise core.AppError("完整模型请求超过 60000 字节上限",429,"依赖故障")
+        request_bytes=len(json.dumps(body,ensure_ascii=False).encode())
+        if request_bytes>60000:raise core.AppError("完整模型请求超过 60000 字节上限",429,"依赖故障")
         store.reserve_call();meta["model_calls"]+=1
         start=time.monotonic();stamp=core.now()
-        event={"number":meta["model_calls"],"started_at":stamp,"status":"started","final_response_only":final_only}
+        event={"number":meta["model_calls"],"started_at":stamp,"status":"started","final_response_only":final_only,"request_bytes":request_bytes}
         meta["model_events"].append(event)
         try:
             r=post(os.getenv("LLM_BASE_URL").rstrip("/")+"/chat/completions",body,
@@ -44,6 +45,7 @@ def request(messages,tools,meta,post,deadline):
             return r
         except core.AppError as e:
             event.update(status="failed",error=str(e),usage_unknown=True)
+            if getattr(e,"details",None):event["diagnostics"]=e.details
             meta["usage_reports"].append(None)
             if not getattr(e,"retryable",False) or attempt==retries or meta["model_calls"]>=limit:raise
             meta["retries"].append({"request":meta["model_calls"],"reason":str(e),"action":"重试模型请求"})

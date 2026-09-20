@@ -2,17 +2,18 @@
 import copy
 from decimal import Decimal
 import core
-VERSION="agent-workflow-contract-v2"
-def offer_summary(snapshot,include_evidence=False):
+VERSION="agent-workflow-contract-v3"
+def offer_summary(snapshot,include_evidence=False,include_source=False):
     product=snapshot["product"];variant=snapshot["variant"];offer=snapshot["offer"]
     value={"offer_id":offer["id"],"name":str(product["name"])[:220],"category":product["category"],
         "price_minor":offer.get("price_minor"),"currency":offer.get("currency"),
         "merchant":offer.get("merchant"),"stock":offer.get("stock"),
         "rating":product.get("attributes",{}).get("rating"),
         "ratings_total":product.get("attributes",{}).get("ratings_total")}
+    if include_source or include_evidence:
+        value["source_url"]=offer.get("url")
     if include_evidence:
         value["spec"]=str(variant.get("spec") or "")[:280]
-        value["source_url"]=offer.get("url")
         value["captured_at"]=offer.get("captured_at")
         value["evidence"]=[{"fields":e.get("fields",[]),"url":e.get("url"),
             "excerpt":str(e.get("excerpt") or "")[:420],"checked_at":e.get("checked_at")}
@@ -43,7 +44,7 @@ def result(ctx,name,value,args):
     value=copy.deepcopy(value)
     currency=ctx.t.get("currency","CNY")
     if name=="search_products" and isinstance(value,list):
-        compact_items=[offer_summary(item) for item in value]
+        compact_items=[offer_summary(item,include_source=True) for item in value]
         category=args.get("category","")
         if ctx.t["scope"]=="real":
             history=(ctx.t.get("search_history") or [{}])[-1]

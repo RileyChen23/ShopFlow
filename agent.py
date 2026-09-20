@@ -7,11 +7,11 @@ STRS={"type":"array","items":STR,"maxItems":20}
 LINE={"type":"object","properties":{"offer_id":STR,"quantity":{"type":"integer","minimum":1,"maximum":99},"required":{"type":"boolean"},"reason":STR},"required":["offer_id","quantity","required","reason"],"additionalProperties":False}
 SCHEMAS={
 "update_constraints":{"type":"object","properties":{"budget_minor":{"type":["integer","null"],"minimum":0,"description":"Integer minor units: CNY fen; 500 yuan = 50000. null means unknown; never yuan."},"owned":STRS,"excluded":STRS,"recipient":{"type":"string","enum":["self","gift"]},"constraints":STRS},"additionalProperties":False},
-"search_products":{"type":"object","properties":{"category":{"type":"string","enum":["","键盘","鼠标","显示器","台灯","支架","扩展坞"]},"query":{"type":"string","maxLength":600,"description":"正式模式的外部实时搜索词。包含品牌/品类、关键规格和地区或币种；由模型根据用户需求生成。演练模式可为空。"}},"required":["category","query"],"additionalProperties":False},
+"search_products":{"type":"object","properties":{"category":{"type":"string","maxLength":80,"description":"用户要求的商品品类，使用自然且具体的名称；不限预设品类。"},"query":{"type":"string","maxLength":600,"description":"商品搜索词，包含品类、关键规格和目标市场或币种。"}},"required":["category","query"],"additionalProperties":False},
 "read_evidence":{"type":"object","properties":{"offer_id":STR},"required":["offer_id"],"additionalProperties":False},
 "set_plan":{"type":"object","properties":{"items":{"type":"array","items":LINE,"maxItems":12}},"required":["items"],"additionalProperties":False},
 "check_plan":{"type":"object","properties":{},"additionalProperties":False}}
-DESCRIPTIONS={"update_constraints":"更新本次任务约束，不写长期偏好，预算单位为分。赠礼时清除本人已有物品。","search_products":"正式模式调用外部商品 Search Provider。根据用户需求生成具体 query，包含品类/型号、关键规格和市场；返回最多5个临时报价ID及来源摘要。搜索摘要不是完整网页，价格可能未知。有可用候选时，本轮需读取首选依据并建立可编辑方案。演练模式只查测试夹具。","read_evidence":"读取搜索结果对应的报价、规格摘要、采集时间和来源；推荐或加入方案前必须读取。","set_plan":"用已读取证据的报价 ID 更新整个方案；服务器校验预算和身份。需求足够明确且已有可用候选时必须调用；未给数量时首选按1件建立初稿。","check_plan":"计算已知费用、未知费用和兼容性待核实事项。"}
+DESCRIPTIONS={"update_constraints":"更新本次任务约束，不写长期偏好，预算单位为分。赠礼时清除本人已有物品。","search_products":"搜索一个商品品类并返回最多5个候选。category 使用用户要求的自然品类名，不限预设范围；query 包含关键规格和目标市场。多品类需求分别搜索每个品类，再读取各品类首选依据并写入完整组合。","read_evidence":"读取搜索结果对应的报价、规格摘要、采集时间和来源；加入方案前必须读取。","set_plan":"用已读取证据的报价 ID 更新整个方案；服务器校验预算和目标品类覆盖。多品类需求必须包含每个已找到候选的目标品类；未给数量时按1件建立初稿。","check_plan":"计算已知费用、未知费用和兼容性待核实事项。"}
 SCHEMAS["get_task"]={"type":"object","properties":{},"additionalProperties":False}
 SCHEMAS["get_preferences"]={"type":"object","properties":{},"additionalProperties":False}
 SCHEMAS["update_item"]={"type":"object","properties":{"offer_id":STR,"quantity":{"type":"integer","minimum":1,"maximum":99},"required":{"type":"boolean"},"remove":{"type":"boolean"}},"required":["offer_id"],"additionalProperties":False}
@@ -24,7 +24,7 @@ SCHEMAS["commit_pending_plan"]={"type":"object","properties":{},"additionalPrope
 class Context:
     def __init__(self,t,version="v2",fault=None,pref=None,searcher=None,target_categories=None,mutation_kind=None):
         self.t=t;self.version=version;self.events=[];self.read={i["offer_id"] for i in t["items"]};self.read_this_turn=set();self.fault=fault;self.tools=0;self.pref=pref or {};self.searcher=searcher
-        self.target_categories=set(target_categories or []);self.mutation_kind=mutation_kind;self.search_results={};self.last_search=None;self.pending_plan=None;self.plan_updated=False;self.last_plan_result=None;self.currency_blocked=None
+        self.target_categories=set(target_categories or []);self.mutation_kind=mutation_kind;self.search_results={};self.search_attempts={};self.last_search=None;self.pending_plan=None;self.plan_updated=False;self.last_plan_result=None;self.currency_blocked=None
     def recover_pending_plan(self):
         if not self.pending_plan:return None
         missing=[i["offer_id"] for i in self.pending_plan if i["offer_id"] not in self.read]
@@ -48,6 +48,17 @@ class Context:
                 removed=core.repair_budget(self.t,self.version);self.t["confirmation"]=None
                 result={"budget_minor":self.t["budget_minor"],"owned":self.t["owned"],"excluded":self.t["excluded"],"removed":removed,"totals":core.totals(self.t)}
             elif name=="search_products":
+                search_key=(args["category"].strip().casefold(),args["query"].strip().casefold())
+                attempts=self.search_attempts.get(search_key,0)
+                if attempts>=1 and self.search_results.get(args["category"]):
+                    error=AppError("相同品类和条件已经有可用结果",400,"推荐约束")
+                    error.details={"error_code":"duplicate_search","recoverable":True,"recovery":"Use the existing results, read the preferred evidence, and build the plan."}
+                    raise error
+                if attempts>=2:
+                    error=AppError("相同搜索已重试一次，暂不继续重复",400,"推荐约束")
+                    error.details={"error_code":"duplicate_search_limit","recoverable":True,"recovery":"Keep available results and continue with other requested categories."}
+                    raise error
+                self.search_attempts[search_key]=attempts+1
                 if self.fault=="search":raise AppError("测试注入：检索超时。可手动浏览已有资料。",503,"检索")
                 if self.t["scope"]=="real":
                     if not args["query"].strip():raise AppError("正式模式需要具体的外部搜索 query",400,"需求理解")
@@ -90,6 +101,14 @@ class Context:
                 if self.t["scope"]=="real" and result["product"]["kind"] not in ("verified","external"):raise AppError("真实资料不包含测试店铺")
                 self.read.add(args["offer_id"]);self.read_this_turn.add(args["offer_id"])
             elif name=="set_plan":
+                selected_categories={core.snapshot(x["offer_id"],self.t)["product"]["category"] for x in args["items"]}
+                searched_categories={category for category,offer_ids in self.search_results.items() if offer_ids}
+                expected_categories=(self.target_categories & searched_categories) or searched_categories
+                missing_categories=sorted(expected_categories-selected_categories)
+                if len(expected_categories)>1 and missing_categories:
+                    error=AppError("组合方案缺少已找到商品的目标品类",400,"推荐约束")
+                    error.details={"error_code":"target_category_missing","missing_categories":missing_categories,"recoverable":True,"required_next_tool":"set_plan"}
+                    raise error
                 missing=[x["offer_id"] for x in args["items"] if x["offer_id"] not in self.read]
                 if missing:
                     self.pending_plan=copy.deepcopy(args["items"]);result={"ok":True,"status":"awaiting_evidence","state_changed":False,"error_code":"evidence_required","missing_offer_ids":missing,"recoverable":True,"required_next_tool":"read_evidence","pending_plan_staged":True}
@@ -127,7 +146,7 @@ class Context:
             event.update(ended_at=now(),ms=round((time.monotonic()-start)*1000,2))
             self.events.append(event)
 
-CATS={"键盘":["键盘","keyboard","打字","输入"],"鼠标":["鼠标","mouse"],"显示器":["显示器","屏幕","monitor"],"台灯":["台灯","灯光","照明","阅读灯"],"支架":["支架","增高架","姿势","抬高"],"扩展坞":["扩展坞","转接器","转接头"]}
+CATS={"键盘":["键盘","keyboard","打字","输入"],"鼠标":["鼠标","mouse"],"显示器":["显示器","屏幕","monitor"],"台灯":["台灯","灯光","照明","阅读灯"],"置物架":["置物架","收纳架","桌面收纳","desk shelf","organizer shelf"],"支架":["支架","增高架","姿势","抬高","monitor stand"],"扩展坞":["扩展坞","转接器","转接头"]}
 def categories(text):
     return [c for c,words in CATS.items() if any(w in text.lower() for w in words)]
 
@@ -145,7 +164,7 @@ def workflow_tools(ctx):
         names={"read_evidence","replace_item","update_constraints"} if ctx.mutation_kind=="replacement" else {"read_evidence","set_plan","replace_item","update_item","update_constraints"}
     else:
         searched=set(k for k,v in ctx.search_results.items() if v)
-        search_complete=bool(searched) and (not ctx.target_categories or ctx.target_categories<=searched)
+        search_complete=bool(ctx.target_categories) and ctx.target_categories<=searched
         if search_complete:names={"read_evidence","set_plan","replace_item","update_constraints"}
         elif ctx.mutation_kind=="quantity":names={"update_item","update_constraints"}
         elif ctx.mutation_kind=="prune":names={"update_item","update_constraints","check_plan"}
@@ -156,21 +175,52 @@ def workflow_tools(ctx):
     remaining_categories=ctx.target_categories-searched
     if remaining_categories:
         for tool in tools:
-            if tool["function"]["name"]=="search_products":tool["function"]["parameters"]["properties"]["category"]["enum"]=sorted(remaining_categories)
+            if tool["function"]["name"]=="search_products":
+                tool["function"]["description"]+=" Still needed for this request: "+", ".join(sorted(remaining_categories))+"."
     return tools
 
 def prefers_chinese(text):
     """Match the latest user message language without changing the UI locale."""
     return bool(re.search(r"[\u3400-\u9fff]",text or ""))
 
+def correct_unknown_cost_wording(answer,ctx):
+    """Do not let unknown shipping appear as a zero-valued part of the total."""
+    if not any("运费未知" in item for item in core.totals(ctx.t).get("unknown",[])):return answer
+    answer=re.sub(r"运费(?:暂时|暂)?按\s*\$?0(?:\.00)?\s*(?:计|计算)","以上为已知商品小计，不含待确认运费",answer)
+    answer=re.sub(r"shipping\s+(?:is\s+)?(?:temporarily\s+)?(?:counted|treated|calculated)\s+(?:as|at)\s+\$?0(?:\.00)?","the amount shown is the known product subtotal; shipping remains to be confirmed",answer,flags=re.I)
+    return answer
+
 def state_fallback(ctx,text=""):
     totals=core.totals(ctx.t)
     if ctx.t["items"]:
-        items=", ".join(i["snapshot"]["product"]["name"]+" × "+str(i["quantity"]) for i in ctx.t["items"])
         total=totals["currency"]+" "+format(totals["known_total_minor"]/100,".2f")
         if prefers_chinese(text):
             unknown="。部分价格、运费或库存仍需在商品页确认" if totals["unknown"] else ""
-            return "已将以下商品加入购物方案："+items+"。已知合计："+total+unknown+"。"
+            planned=[]
+            for item in ctx.t["items"]:
+                snapshot=item["snapshot"];name=str(snapshot["product"]["name"]).replace("|","/").replace("\n"," ")
+                url=snapshot["offer"].get("url") or snapshot["product"]["evidence"][0].get("url")
+                planned.append("- "+("["+name+"]("+url+")" if url else name)+" × "+str(item["quantity"]))
+            selected={item["offer_id"] for item in ctx.t["items"]};rows=[]
+            for category,offer_ids in ctx.search_results.items():
+                shown=0
+                for offer_id in offer_ids:
+                    if offer_id in selected:continue
+                    try:snapshot=core.snapshot(offer_id,ctx.t)
+                    except AppError:continue
+                    offer=snapshot["offer"];product=snapshot["product"]
+                    price=offer["currency"]+" "+format(offer["price_minor"]/100,".2f") if offer.get("price_minor") is not None else "待确认"
+                    name=str(product["name"]).replace("|","/").replace("\n"," ")
+                    url=offer.get("url") or product["evidence"][0].get("url")
+                    label="["+name+"]("+url+")" if url else name
+                    rating=product.get("attributes",{}).get("rating")
+                    rows.append((category,label,price,(str(rating)+"/5") if rating is not None else "—"));shown+=1
+                    if shown>=2:break
+            comparison=""
+            if rows:
+                comparison="\n\n**其他可选**\n\n| 品类 | 商品 | 单价 | 评分 |\n|---|---|---:|---:|\n"+"\n".join("| "+" | ".join(row)+" |" for row in rows)
+            return "**当前首选已加入购物方案**\n\n"+"\n".join(planned)+"\n\n已知合计：**"+total+"**"+unknown+"。"+comparison
+        items=", ".join(i["snapshot"]["product"]["name"]+" × "+str(i["quantity"]) for i in ctx.t["items"])
         unknown=" Some prices, shipping costs, or stock details still need confirmation on the product page." if totals["unknown"] else ""
         return "I've added this to your shopping plan: "+items+". Known total: "+total+"."+unknown
     if prefers_chinese(text):
@@ -178,12 +228,16 @@ def state_fallback(ctx,text=""):
     return "I couldn't find a suitable product this time. Add a brand, specification, or budget and I'll search again."
 
 def commit_ranked_draft(ctx,text):
-    """Last-step recovery: turn ranked search evidence into an editable first draft."""
+    """Last-step recovery: build one editable preferred item per searched category."""
     if ctx.t.get("items"):return False
     matches=re.findall(r"(?:数量\s*(?:是|为|改成|调整为)?\s*|买\s*)?(\d+)\s*(?:个|件|台|只|把|盏|套|units?|keyboards?|mice|monitors?)",text,re.I)
     quantity=max(1,min(int(matches[-1]),99)) if matches else 1
-    seen=set()
-    for offer_ids in ctx.search_results.values():
+    seen=set();lines=[]
+    categories_to_fill=[category for category in ctx.target_categories if ctx.search_results.get(category)]
+    for category in ctx.search_results:
+        if ctx.search_results[category] and category not in categories_to_fill:categories_to_fill.append(category)
+    for category in categories_to_fill:
+        offer_ids=ctx.search_results.get(category,[])
         for offer_id in offer_ids:
             if offer_id in seen:continue
             seen.add(offer_id)
@@ -192,10 +246,13 @@ def commit_ranked_draft(ctx,text):
                 if snap["offer"].get("currency")!=ctx.t.get("currency","CNY"):continue
                 if offer_id not in ctx.read:ctx.execute("read_evidence",{"offer_id":offer_id})
                 reason="当前结果中最符合需求的选择，可继续调整或替换。" if prefers_chinese(text) else "Best current match; adjust or replace it as needed."
-                ctx.execute("set_plan",{"items":[{"offer_id":offer_id,"quantity":quantity,"required":True,"reason":reason}]})
-                return True
+                lines.append({"offer_id":offer_id,"quantity":quantity,"required":True,"reason":reason})
+                break
             except AppError:continue
-    return False
+    if not lines:return False
+    try:ctx.execute("set_plan",{"items":lines})
+    except AppError:return False
+    return True
 
 def offline(ctx,text,pref):
     t=ctx.t
@@ -286,7 +343,12 @@ def post_json(url,payload,headers,timeout):
     except Exception as e:
         # Never log provider bodies or auth headers.
         status=getattr(e,"code",None)
-        err=AppError("外部接口失败"+(f"（HTTP {status}）" if status else "（连接、超时或响应格式异常）"),502,"依赖故障");err.retryable=status in (429,500,502,503,504) or isinstance(e,(TimeoutError,urllib.error.URLError));raise err from None
+        err=AppError("外部接口失败"+(f"（HTTP {status}）" if status else "（连接、超时或响应格式异常）"),502,"依赖故障")
+        err.retryable=status in (429,500,502,503,504) or isinstance(e,(TimeoutError,urllib.error.URLError))
+        err.details={"network_error_type":type(e).__name__}
+        if isinstance(e,urllib.error.URLError):
+            err.details["network_reason_type"]=type(e.reason).__name__
+        raise err from None
 
 def _live(ctx,text,pref,meta):
     if not provider.configured():raise AppError("未配置模型，请在本机 .env 填写 API 地址、模型与密钥",503,"配置")
@@ -329,6 +391,7 @@ def _live(ctx,text,pref,meta):
                     continue
                 if not commit_ranked_draft(ctx,text):
                     raise AppError("找到的商品暂时无法组成当前币种和预算下的方案",400,"推荐约束")
+            answer=correct_unknown_cost_wording(answer,ctx)
             # URLs in model prose must be from current verified evidence, not invented.
             allowed=set()
             evidence=list((ctx.t.get("search_cache") or {}).values())+[i["snapshot"] for i in ctx.t["items"]]
