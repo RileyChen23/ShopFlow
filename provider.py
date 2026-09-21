@@ -28,7 +28,8 @@ def request(messages,tools,meta,post,deadline):
             effective_messages=messages+[{"role":"system","content":"Last request after retries: no tools; explain actual state or missing information only."}]
         body=payload(effective_messages,[] if final_only else tools)
         request_bytes=len(json.dumps(body,ensure_ascii=False).encode())
-        if request_bytes>60000:raise core.AppError("完整模型请求超过 60000 字节上限",429,"依赖故障")
+        max_request_bytes=min(max(int(os.getenv("LLM_MAX_REQUEST_BYTES","240000")),60000),500000)
+        if request_bytes>max_request_bytes:raise core.AppError("完整模型请求超过本轮输入预算",429,"依赖故障")
         store.reserve_call();meta["model_calls"]+=1
         start=time.monotonic();stamp=core.now()
         event={"number":meta["model_calls"],"started_at":stamp,"status":"started","final_response_only":final_only,"request_bytes":request_bytes}

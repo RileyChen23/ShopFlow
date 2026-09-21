@@ -60,7 +60,8 @@ class LiveContracts(unittest.TestCase):
   self.assertGreaterEqual(len(rows),24);self.assertTrue(all(r["product"]["kind"]=="verified" for r in rows))
  def test_full_body_limit_before_reservation(self):
   meta={"model_calls":0}
-  with self.assertRaises(core.AppError):provider.request([{"role":"user","content":"字"*60000}],[],meta,None,time.monotonic()+10)
+  with patch.dict(os.environ,{"LLM_MAX_REQUEST_BYTES":"60000"}):
+   with self.assertRaises(core.AppError):provider.request([{"role":"user","content":"x"*60000}],[],meta,None,time.monotonic()+10)
   self.assertEqual(meta["model_calls"],0)
  def test_cost_zero_missing_and_peak(self):
   self.assertIsNone(provider.cost({},core.now()))
