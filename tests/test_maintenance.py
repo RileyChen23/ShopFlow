@@ -46,6 +46,7 @@ class MaintenanceTests(unittest.TestCase):
         app=(core.ROOT/"web/app.js").read_text(encoding="utf-8")
         self.assertIn("function markdown(value)",app)
         self.assertIn('class="message-table"',app)
+        self.assertIn('class="budget-groups"',app)
         self.assertIn('rel="noopener"',app)
         self.assertIn("Recent shopping",app)
         self.assertIn("Add from results",app)

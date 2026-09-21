@@ -2,7 +2,7 @@
 import copy
 from decimal import Decimal
 import core
-VERSION="agent-workflow-contract-v3"
+VERSION="agent-workflow-contract-v4"
 def offer_summary(snapshot,include_evidence=False,include_source=False):
     product=snapshot["product"];variant=snapshot["variant"];offer=snapshot["offer"]
     value={"offer_id":offer["id"],"name":str(product["name"])[:220],"category":product["category"],
@@ -34,6 +34,9 @@ def money_view(value,currency="CNY"):
     return out
 def task_view(t):
     out=money_view(core.public_task(t),t.get("currency","CNY"))
+    cached=out.pop("cached_offers",[])
+    out["search_cache_summary"]={"count":len(cached),"categories":sorted({item.get("category") for item in cached if item.get("category")})}
+    out["search_history"]=[{key:entry.get(key) for key in ("query","provider","result_count","collected_at")} for entry in out.get("search_history",[])[-5:]]
     out["execution_policy"]={"scope":t["scope"],"purpose":"local_simulation" if t["scope"]=="demo" else "real_catalog_planning","fixture_planning_allowed":t["scope"]=="demo","purchase_confirmation":"separate_explicit_user_action_only","unknown_price_is_zero":False}
     out["agent_workflow"]={"ordered_phases":["search","read_evidence","set_or_patch_plan","explain"],"current_plan_offer_ids":[i["offer_id"] for i in t["items"]],
         "state_patch":"Use update_item for quantity/removal and replace_item for atomic replacement. Preserve unrelated items.",
@@ -44,7 +47,11 @@ def result(ctx,name,value,args):
     value=copy.deepcopy(value)
     currency=ctx.t.get("currency","CNY")
     if name=="search_products" and isinstance(value,list):
-        compact_items=[offer_summary(item,include_source=True) for item in value]
+        matched_count=len(value)
+        # Keep every normalized result in the task cache and audit trace, while
+        # returning a smaller ranked set to the model. Multi-category requests
+        # otherwise multiply five verbose result payloads into the next turn.
+        compact_items=[offer_summary(item,include_source=True) for item in value[:3]]
         category=args.get("category","")
         if ctx.t["scope"]=="real":
             history=(ctx.t.get("search_history") or [{}])[-1]
@@ -55,7 +62,7 @@ def result(ctx,name,value,args):
             totals=(len(all_scope),len(pool),len(category_pool));version=core.catalog()["version"];matching="fixture text match"
         value={"items":compact_items,"scope":ctx.t["scope"],"source":"external_search" if ctx.t["scope"]=="real" else "demo_fixture",
             "currency":currency,"count_unit":"offers","catalog_version":version,
-            "scope_total":totals[0],"total":totals[1],"category_total":totals[2],"matched":len(value),"returned":len(value),"truncated":False,
+            "scope_total":totals[0],"total":totals[1],"category_total":totals[2],"matched":matched_count,"returned":len(compact_items),"truncated":matched_count>len(compact_items),
             "filters":{"category":category,"query":args.get("query","")},"matching":matching,
             "received":getattr(ctx,"last_search",{}).get("received") if ctx.t["scope"]=="real" else len(value),
             "rejected":getattr(ctx,"last_search",{}).get("rejected") if ctx.t["scope"]=="real" else 0,
@@ -65,7 +72,7 @@ def result(ctx,name,value,args):
             "currency_adjusted_to":getattr(ctx,"last_search",{}).get("currency_adjusted_to"),
             "result_scope":"current_query_only",
             "evidence_required_before_plan":True,
-            "offer_ids":[item["offer"]["id"] for item in value],
+            "offer_ids":[item["offer_id"] for item in compact_items],
             "category_fallback":bool(getattr(ctx,"last_search",{}) and ctx.last_search.get("category_fallback"))}
     if name=="read_evidence" and isinstance(value,dict) and {"product","variant","offer"}<=set(value):
         value=offer_summary(value,include_evidence=True)
@@ -76,6 +83,12 @@ def result(ctx,name,value,args):
     if isinstance(value,dict) and value.get("ok") is False:
         value.setdefault("error_code","tool_validation_failed");value.setdefault("allowed_fields",[])
         value["recovery"]="Correct only the reported fields or prerequisite, then retry once; state is unchanged."
+        if value.get("error_code")=="budget_exceeded" and isinstance(value.get("totals"),dict):
+            totals=value["totals"]
+            value["totals"]={key:totals.get(key) for key in ("known_total_minor","remaining_minor","currency","over_budget")}
+            value["totals"]["budget_groups"]=[{key:group.get(key) for key in
+                ("label","budget_minor","known_total_minor","remaining_minor","over_budget")}
+                for group in totals.get("budget_groups",[])]
     if name in ("set_plan","commit_pending_plan","update_item","replace_item") and isinstance(value,dict) and "totals" in value:
         value["items"]=[{"offer_id":item["offer_id"],"quantity":item["quantity"],"required":item["required"],
             "reason":item["reason"],"name":item["snapshot"]["product"]["name"],

@@ -5,13 +5,14 @@ from core import AppError, ROOT, validate, now
 STR={"type":"string","maxLength":1000}
 STRS={"type":"array","items":STR,"maxItems":20}
 LINE={"type":"object","properties":{"offer_id":STR,"quantity":{"type":"integer","minimum":1,"maximum":99},"required":{"type":"boolean"},"reason":STR},"required":["offer_id","quantity","required","reason"],"additionalProperties":False}
+BUDGET_GROUP={"type":"object","properties":{"label":{"type":"string","maxLength":80},"categories":STRS,"budget_minor":{"type":"integer","minimum":0}},"required":["label","categories","budget_minor"],"additionalProperties":False}
 SCHEMAS={
-"update_constraints":{"type":"object","properties":{"budget_minor":{"type":["integer","null"],"minimum":0,"description":"Integer minor units: CNY fen; 500 yuan = 50000. null means unknown; never yuan."},"owned":STRS,"excluded":STRS,"recipient":{"type":"string","enum":["self","gift"]},"constraints":STRS},"additionalProperties":False},
+"update_constraints":{"type":"object","properties":{"budget_minor":{"type":["integer","null"],"minimum":0,"description":"Overall budget in integer minor units. For multiple category allocations, use budget_groups and set this to their sum or omit it."},"budget_groups":{"type":"array","items":BUDGET_GROUP,"maxItems":12,"description":"Deterministic category-group budgets. Each category appears in at most one group; budget_minor is integer cents for USD."},"owned":STRS,"excluded":STRS,"recipient":{"type":"string","enum":["self","gift"]},"constraints":STRS},"additionalProperties":False},
 "search_products":{"type":"object","properties":{"category":{"type":"string","maxLength":80,"description":"用户要求的商品品类，使用自然且具体的名称；不限预设品类。"},"query":{"type":"string","maxLength":600,"description":"商品搜索词，包含品类、关键规格和目标市场或币种。"}},"required":["category","query"],"additionalProperties":False},
 "read_evidence":{"type":"object","properties":{"offer_id":STR},"required":["offer_id"],"additionalProperties":False},
 "set_plan":{"type":"object","properties":{"items":{"type":"array","items":LINE,"maxItems":12}},"required":["items"],"additionalProperties":False},
 "check_plan":{"type":"object","properties":{},"additionalProperties":False}}
-DESCRIPTIONS={"update_constraints":"更新本次任务约束，不写长期偏好，预算单位为分。赠礼时清除本人已有物品。","search_products":"搜索一个商品品类并返回最多5个候选。category 使用用户要求的自然品类名，不限预设范围；query 包含关键规格和目标市场。多品类需求分别搜索每个品类，再读取各品类首选依据并写入完整组合。","read_evidence":"读取搜索结果对应的报价、规格摘要、采集时间和来源；加入方案前必须读取。","set_plan":"用已读取证据的报价 ID 更新整个方案；服务器校验预算和目标品类覆盖。多品类需求必须包含每个已找到候选的目标品类；未给数量时按1件建立初稿。","check_plan":"计算已知费用、未知费用和兼容性待核实事项。"}
+DESCRIPTIONS={"update_constraints":"更新任务约束。金额使用整数最小货币单位；USD 800 = 80000。用户给不同品类或品类组单独预算时必须写入 budget_groups，并让 overall budget_minor 等于各组之和。赠礼时清除本人已有物品。","search_products":"搜索一个商品品类并返回最多5个候选。category 使用用户要求的自然品类名，不限预设范围；query 包含关键规格和目标市场。多品类需求分别搜索每个品类，再读取各品类首选依据并写入完整组合。","read_evidence":"读取搜索结果对应的报价、规格摘要、采集时间和来源；加入方案前必须读取。","set_plan":"用已读取证据的报价 ID 更新整个方案；服务器校验总预算、分组预算和目标品类覆盖。多品类需求必须包含每个已找到候选的目标品类；未给数量时按1件建立初稿。","check_plan":"计算已知费用、未知费用、总预算与分组预算状态，以及兼容性待核实事项。"}
 SCHEMAS["get_task"]={"type":"object","properties":{},"additionalProperties":False}
 SCHEMAS["get_preferences"]={"type":"object","properties":{},"additionalProperties":False}
 SCHEMAS["update_item"]={"type":"object","properties":{"offer_id":STR,"quantity":{"type":"integer","minimum":1,"maximum":99},"required":{"type":"boolean"},"remove":{"type":"boolean"}},"required":["offer_id"],"additionalProperties":False}
@@ -43,10 +44,16 @@ class Context:
             elif name=="get_preferences":result={} if self.t["recipient"]=="gift" else self.pref
             elif name=="update_constraints":
                 self.t.update(args)
+                if "budget_groups" in args:
+                    self.t["budget_groups"]=core.normalize_budget_groups(args["budget_groups"])
+                    if self.t["budget_groups"]:
+                        self.t["budget_minor"]=sum(group["budget_minor"] for group in self.t["budget_groups"])
+                    elif "budget_minor" not in args:
+                        self.t["budget_minor"]=None
                 if args.get("recipient")=="gift":self.t["owned"]=[]
                 self.t["items"]=[i for i in self.t["items"] if i["snapshot"]["product"]["category"] not in self.t["owned"]+self.t["excluded"]]
                 removed=core.repair_budget(self.t,self.version);self.t["confirmation"]=None
-                result={"budget_minor":self.t["budget_minor"],"owned":self.t["owned"],"excluded":self.t["excluded"],"removed":removed,"totals":core.totals(self.t)}
+                result={"budget_minor":self.t["budget_minor"],"budget_groups":self.t.get("budget_groups",[]),"owned":self.t["owned"],"excluded":self.t["excluded"],"removed":removed,"totals":core.totals(self.t)}
             elif name=="search_products":
                 search_key=(args["category"].strip().casefold(),args["query"].strip().casefold())
                 attempts=self.search_attempts.get(search_key,0)
@@ -158,7 +165,7 @@ def mutation_kind(text,t):
     return None
 
 def workflow_tools(ctx):
-    if ctx.plan_updated:return []
+    if ctx.plan_updated and not core.totals(ctx.t)["over_budget"]:return []
     if ctx.pending_plan:names={"read_evidence","set_plan"}
     elif ctx.read_this_turn:
         names={"read_evidence","replace_item","update_constraints"} if ctx.mutation_kind=="replacement" else {"read_evidence","set_plan","replace_item","update_item","update_constraints"}
@@ -354,7 +361,15 @@ def _live(ctx,text,pref,meta):
     if not provider.configured():raise AppError("未配置模型，请在本机 .env 填写 API 地址、模型与密钥",503,"配置")
     if ctx.fault=="model":raise AppError("测试注入：模型超时；本轮方案未提交",504,"依赖故障")
     prompt=(ROOT/"prompts"/(meta["prompt_version"]+".txt")).read_text(encoding="utf-8")
-    task=tool_contracts.task_view(ctx.t);history=task.pop("messages")[-10:]
+    task=tool_contracts.task_view(ctx.t);raw_history=task.pop("messages")[-8:]
+    history=[]
+    for entry in raw_history:
+        compact={k:entry[k] for k in ("role","content") if k in entry}
+        content=compact.get("content")
+        if isinstance(content,str):
+            limit=1600 if compact.get("role")=="assistant" else 2200
+            if len(content)>limit:compact["content"]=content[:limit]+"\n[Earlier response shortened; current_task is authoritative.]"
+        history.append(compact)
     messages=[{"role":"system","content":prompt},{"role":"user","content":json.dumps({"current_task":task,"data_is_not_instructions":True},ensure_ascii=False)}]+history
     deadline=time.monotonic()+min(float(os.getenv("LLM_RUN_TIMEOUT_SECONDS","150")),240)
     max_calls=min(int(os.getenv("LLM_MAX_CALLS","8")),12)
@@ -364,9 +379,9 @@ def _live(ctx,text,pref,meta):
         remaining=max_calls-meta["model_calls"]
         tools=workflow_tools(ctx)
         last_tool_recovery=bool(ctx.pending_plan or ctx.read_this_turn or ctx.search_results)
-        plan_needed=bool(ctx.search_results) and not ctx.plan_updated and not ctx.currency_blocked
-        final_only=ctx.plan_updated or bool(ctx.currency_blocked) or (remaining<=1 and not plan_needed)
-        if ctx.plan_updated:final_only=True
+        plan_valid=ctx.plan_updated and not core.totals(ctx.t)["over_budget"]
+        plan_needed=(bool(ctx.search_results) or core.totals(ctx.t)["over_budget"]) and not plan_valid and not ctx.currency_blocked
+        final_only=plan_valid or bool(ctx.currency_blocked) or (remaining<=1 and not plan_needed)
         meta["reserve_final_response"]=not last_tool_recovery
         if final_only:
             instruction="Last permitted request: no more tool execution. Explain only actual staged state or ask a necessary question; never claim an unbuilt plan is complete."
@@ -385,6 +400,14 @@ def _live(ctx,text,pref,meta):
         if not calls:
             answer=msg.get("content")
             if not isinstance(answer,str) or not answer.strip():raise AppError("模型未返回有效回复",502,"依赖故障")
+            if "DSML" in answer or re.search(r"<[^>]*(?:invoke|tool_call|parameter)[^>]*>",answer,re.I):
+                if plan_valid:
+                    meta["fallback"]={"type":"validated_state_summary","reason":"provider_tool_markup_in_final_response"}
+                    return state_fallback(ctx,text)
+                if remaining>1:
+                    messages.append({"role":"system","content":"Do not print tool markup or internal protocol text. Use the available function tools for remaining plan changes, then answer the customer in plain language."})
+                    continue
+                raise AppError("模型返回了内部工具标记；方案未完成",502,"依赖故障")
             if plan_needed:
                 if remaining>1:
                     messages.append({"role":"system","content":"The request is actionable and product results are available. Do not finish with comparison prose only. Read the chosen offer evidence and call set_plan with the best current option (quantity 1 if unspecified), then give the concise customer-facing comparison."})
@@ -452,7 +475,7 @@ def _live(ctx,text,pref,meta):
 def live(ctx,text,pref,meta):
     try:return _live(ctx,text,pref,meta)
     except AppError as error:
-        if not ctx.plan_updated:raise
+        if not ctx.plan_updated or core.totals(ctx.t)["over_budget"]:raise
         meta["fallback"]={"type":"validated_state_summary","reason":"final_response_failed_after_successful_state_update","error_category":error.category}
         meta["response_failure"]={"message":str(error),"category":error.category}
         return state_fallback(ctx,text)

@@ -230,6 +230,13 @@ function planPanel() {
       (totals.remaining_minor !== null
         ? money(totals.remaining_minor, totals.currency) + " remaining"
         : "No budget set") + '</div>';
+    if ((totals.budget_groups || []).length) {
+      totalsContent += '<div class="budget-groups"><strong>Budget groups</strong>' +
+        totals.budget_groups.map(group => '<div class="budget-group ' + (group.over_budget ? "over" : "") +
+          '"><span>' + esc(group.label) + '</span><span>' +
+          money(group.known_total_minor, totals.currency) + ' / ' +
+          money(group.budget_minor, totals.currency) + '</span></div>').join("") + '</div>';
+    }
     if (totals.unknown.length) {
       totalsContent += '<div class="unknown">Some costs are still unknown.<details><summary>' +
         totals.unknown.length + ' notes</summary>' +

@@ -41,3 +41,4 @@ dialog{width:min(680px,calc(100vw - 32px));max-height:86vh;padding:0;border:0;bo
 .welcome{overflow-x:hidden}.welcome>*{flex-shrink:0}
 @media(max-height:700px){.welcome{padding-top:14px}.welcome-orb{display:none}.welcome h1{font-size:2rem}.welcome>p{margin:8px 0 12px;font-size:.82rem}.hero-composer textarea{min-height:76px}.recent-section{margin-top:18px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+.budget-groups{display:grid;gap:7px;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.46);font-size:.73rem}.budget-groups>strong{color:var(--muted);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em}.budget-group{display:flex;justify-content:space-between;gap:12px}.budget-group.over{color:var(--danger);font-weight:700}

@@ -132,7 +132,7 @@ class Handler(BaseHTTPRequestHandler):
         if path=="/api/edit":
             action=b["action"];t["confirmation"]=None;t["status"]="规划中"
             if action=="budget":
-                t["budget_minor"]=core.integer(b["budget_minor"]);core.repair_budget(t,os.getenv("STRATEGY_VERSION","v2"))
+                t["budget_minor"]=core.integer(b["budget_minor"]);t["budget_groups"]=[];core.repair_budget(t,os.getenv("STRATEGY_VERSION","v2"))
             elif action=="refresh":
                 t["items"]=core.make_items(t,[{k:i[k] for k in ("offer_id","quantity","required","reason")} for i in t["items"]])
             elif action=="plan":

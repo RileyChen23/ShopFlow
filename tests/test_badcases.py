@@ -35,6 +35,14 @@ class BadcaseContracts(unittest.TestCase):
     raw=ctx.execute("search_products",args);wire=tool_contracts.result(ctx,"search_products",raw,args)
     self.assertEqual((wire["scope_total"],wire["total"],wire["category_total"]),(None,None,None))
     self.assertEqual(wire["source"],"external_search");self.assertEqual(wire["matched"],1)
+ def test_model_search_result_keeps_top_five_in_cache_but_returns_three(self):
+    class Five:
+      def search(self,q,n):return {"provider":"test","request_id":"r","credits":0,"results":[{"title":f"Keyboard {i}","url":f"https://example.com/k{i}","content":f"wired USB keyboard ${10+i}.00"} for i in range(5)]}
+    task=t("real");ctx=agent.Context(task,searcher=Five());args={"category":"keyboard","query":"wired keyboard"}
+    raw=ctx.execute("search_products",args);wire=tool_contracts.result(ctx,"search_products",raw,args)
+    self.assertEqual(len(task["search_cache"]),5)
+    self.assertEqual((wire["matched"],wire["returned"],wire["truncated"]),(5,3,True))
+    self.assertEqual(len(wire["items"]),3)
  def test_empty_search_is_not_failure(self):
     class Empty:
       def search(self,q,n):return {"provider":"test","request_id":"r","credits":0,"results":[]}
@@ -52,9 +60,30 @@ class BadcaseContracts(unittest.TestCase):
     task=t();core.set_plan(task,[line(),line("test-lamp1-o")]);ctx=agent.Context(task)
     raw=ctx.execute("update_constraints",{"budget_minor":20000})
     wire=tool_contracts.result(ctx,"update_constraints",raw,{"budget_minor":20000})
-    self.assertEqual([x["offer_id"] for x in wire["current_items"]],["test-kbd1-o"])
-    with self.assertRaises(core.AppError):ctx.execute("update_item",{"offer_id":"test-lamp1-o","remove":True})
+    self.assertEqual([x["offer_id"] for x in wire["current_items"]],["test-kbd1-o","test-lamp1-o"])
+    self.assertTrue(wire["totals"]["over_budget"])
+    ctx.execute("update_item",{"offer_id":"test-lamp1-o","remove":True})
     self.assertEqual(task["items"][0]["offer_id"],"test-kbd1-o")
+ def test_budget_groups_compute_total_and_remain_machine_readable(self):
+    task=t();ctx=agent.Context(task)
+    groups=[{"label":"Ovens","categories":["烤箱"],"budget_minor":80000},{"label":"Other tools","categories":["模具","打蛋器"],"budget_minor":10000}]
+    raw=ctx.execute("update_constraints",{"budget_groups":groups})
+    self.assertEqual(task["budget_minor"],90000);self.assertEqual(task["budget_groups"],groups)
+    self.assertEqual(raw["totals"]["remaining_minor"],90000)
+ def test_model_task_view_does_not_embed_old_search_cache(self):
+    task=t("real");snapshot=core.snapshot("real-a24i-o")
+    task["search_cache"]={"cached-"+str(index):copy.deepcopy(snapshot) for index in range(30)}
+    view=tool_contracts.task_view(task)
+    self.assertNotIn("cached_offers",view);self.assertEqual(view["search_cache_summary"]["count"],30)
+    self.assertLess(len(json.dumps(view,ensure_ascii=False).encode()),16000)
+ def test_budget_groups_override_inconsistent_overall_budget(self):
+    task=t();ctx=agent.Context(task)
+    groups=[{"label":"Ovens","categories":["oven"],"budget_minor":80000},{"label":"Other tools","categories":["mixer","pan"],"budget_minor":10000}]
+    raw=ctx.execute("update_constraints",{"budget_minor":80000,"budget_groups":groups})
+    self.assertEqual(task["budget_minor"],90000)
+    self.assertEqual(raw["budget_groups"],groups)
+    self.assertEqual(raw["budget_minor"],90000)
+    self.assertEqual(raw["totals"]["remaining_minor"],90000)
  def test_evidence_prerequisite_is_not_relaxed(self):
     task=t();ctx=agent.Context(task)
     staged=ctx.execute("set_plan",{"items":[line()]})
@@ -115,6 +144,14 @@ class BadcaseContracts(unittest.TestCase):
     self.assertEqual(task["items"][0]["offer_id"],"test-kbd1-o");self.assertEqual(trace["fallback"]["type"],"validated_state_summary")
     self.assertEqual(trace["status"],"partial");self.assertIn("购物方案",task["messages"][-1]["content"])
     self.assertNotIn("服务端",task["messages"][-1]["content"])
+ def test_internal_tool_markup_is_never_shown_to_customer(self):
+    search={"choices":[{"message":{"role":"assistant","content":None,"tool_calls":[{"id":"search","type":"function","function":{"name":"search_products","arguments":json.dumps({"category":"键盘","query":"键盘"})}}]},"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2,"prompt_cache_hit_tokens":0,"prompt_cache_miss_tokens":1}}
+    plan={"choices":[{"message":{"role":"assistant","content":None,"tool_calls":[{"id":"read","type":"function","function":{"name":"read_evidence","arguments":json.dumps({"offer_id":"test-kbd1-o"})}},{"id":"plan","type":"function","function":{"name":"set_plan","arguments":json.dumps({"items":[line()]})}}]},"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2,"prompt_cache_hit_tokens":0,"prompt_cache_miss_tokens":1}}
+    leaked={"choices":[{"message":{"role":"assistant","content":"<｜DSML｜ invoke name=replace_item>internal</｜DSML｜ invoke>"},"finish_reason":"stop"}],"usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2,"prompt_cache_hit_tokens":0,"prompt_cache_miss_tokens":1}}
+    with patch.dict(os.environ,{"LLM_MAX_CALLS":"3","LLM_MAX_RETRIES":"0","LLM_PROMPT_VERSION":"shopflow-v2"}),patch.object(agent,"post_json",side_effect=[search,plan,leaked]):
+      task,trace=agent.run(t(),"预算300元买键盘",{},mode="live")
+    self.assertNotIn("DSML",task["messages"][-1]["content"])
+    self.assertEqual(trace["fallback"]["reason"],"provider_tool_markup_in_final_response")
  def test_live_controller_recovers_plan_called_before_evidence(self):
     search_call={"id":"search","type":"function","function":{"name":"search_products","arguments":json.dumps({"category":"键盘","query":"键盘"})}}
     reversed_calls=[

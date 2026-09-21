@@ -126,7 +126,7 @@ def fresh_task(owner,scope="demo",pref=None):
     import uuid
     return {"id":uuid.uuid4().hex,"owner":owner,"revision":0,"title":"新的采购任务","scope":scope,
             "budget_minor":None,"recipient":"self","owned":list((pref or {}).get("owned",[])),
-            "excluded":[],"constraints":[],"items":[],"messages":[],"confirmation":None,
+            "excluded":[],"constraints":[],"budget_groups":[],"items":[],"messages":[],"confirmation":None,
             "search_cache":{},"search_history":[],
             "status":"规划中","created":now()}
 
@@ -141,6 +141,36 @@ def cache_search(t,snapshots,query,provider,request_id=None,credits=None):
         "credits":credits,"result_count":len(snapshots),"collected_at":now()})
     t["search_history"]=t["search_history"][-10:]
     return snapshots
+
+def normalize_budget_groups(groups):
+    if groups is None:return []
+    if type(groups) is not list or len(groups)>12:raise AppError("分组预算格式无效",category="计算")
+    normalized=[];labels=set();categories=set()
+    for group in groups:
+        if type(group) is not dict or set(group)!={"label","categories","budget_minor"}:raise AppError("分组预算字段无效",category="计算")
+        label=str(group["label"]).strip()
+        if not label or len(label)>80 or label in labels:raise AppError("分组预算名称无效或重复",category="计算")
+        members=group["categories"]
+        if type(members) is not list or not members or len(members)>20:raise AppError("分组预算必须包含商品品类",category="计算")
+        members=[str(value).strip() for value in members]
+        if any(not value or len(value)>80 or value in categories for value in members):raise AppError("分组预算品类为空或重复",category="计算")
+        labels.add(label);categories.update(members)
+        normalized.append({"label":label,"categories":members,"budget_minor":integer(group["budget_minor"])})
+    return normalized
+
+def budget_group_totals(t):
+    groups=[]
+    for group in normalize_budget_groups(t.get("budget_groups",[])):
+        known=0;matched=[]
+        for item in t.get("items",[]):
+            category=str(item["snapshot"]["product"]["category"])
+            if not any(category==member or member in category or category in member for member in group["categories"]):continue
+            offer=item["snapshot"]["offer"];matched.append(item["offer_id"])
+            if offer.get("price_minor") is not None:known+=integer(offer["price_minor"])*integer(item["quantity"],1,99)
+            if offer.get("shipping_minor") is not None:known+=integer(offer["shipping_minor"])
+        groups.append({**group,"known_total_minor":known,"remaining_minor":group["budget_minor"]-known,
+            "over_budget":known>group["budget_minor"],"offer_ids":matched})
+    return groups
 
 def totals(t):
     subtotal=0; unknown=[]; shipping={}; currency=None
@@ -158,10 +188,13 @@ def totals(t):
         if o.get("valid_until") and o["valid_until"] < now(): unknown.append("报价已过期："+o["id"])
     known_shipping=sum(x for x in shipping.values() if x is not None)
     known=subtotal+known_shipping
+    group_totals=budget_group_totals(t)
+    global_over=t.get("budget_minor") is not None and known>t["budget_minor"]
     return {"subtotal_minor":subtotal,"shipping_known_minor":known_shipping,"known_total_minor":known,
             "currency":currency or t.get("currency","CNY"),"unknown":sorted(set(unknown)),
-            "over_budget":t["budget_minor"] is not None and known>t["budget_minor"],
-            "remaining_minor":None if t["budget_minor"] is None else t["budget_minor"]-known,
+            "over_budget":global_over or any(group["over_budget"] for group in group_totals),
+            "remaining_minor":None if t.get("budget_minor") is None else t["budget_minor"]-known,
+            "budget_groups":group_totals,
             "final_total_minor":None if any("价格" in x or "运费" in x or "售价" in x or "过期" in x for x in unknown) else known}
 
 def compatibility(t):
@@ -197,7 +230,12 @@ def make_items(t, lines):
 def set_plan(t,lines):
     old=t["items"]; t["items"]=make_items(t,lines)
     try:
-        if totals(t)["over_budget"]: raise AppError("方案已超预算，请减少数量或选择更低报价",category="推荐约束")
+        current=totals(t)
+        if current["over_budget"]:
+            exceeded=[group["label"] for group in current.get("budget_groups",[]) if group["over_budget"]]
+            message="方案已超预算，请减少数量或选择更低报价"
+            if exceeded:message="以下分组超预算："+"、".join(exceeded)+"；请调整对应商品"
+            error=AppError(message,category="推荐约束");error.details={"error_code":"budget_exceeded","exceeded_groups":exceeded,"totals":current};raise error
     except Exception:
         t["items"]=old; raise
     t["confirmation"]=None
@@ -206,7 +244,17 @@ def set_plan(t,lines):
 def repair_budget(t, version="v2"):
     if t["budget_minor"] is None:return
     rows=t["items"]
-    if version=="v2": rows=sorted(rows,key=lambda i:not i["required"])
+    if version=="v2":
+        # Keep required rows until an atomic replacement succeeds. A tighter
+        # budget must not silently turn a complete request into a partial plan.
+        kept=[item for item in rows if item["required"]]
+        removed=[]
+        for item in (item for item in rows if not item["required"]):
+            probe=copy.deepcopy(t);probe["items"]=kept+[item]
+            if totals(probe)["over_budget"]:removed.append(item["snapshot"]["product"]["name"])
+            else:kept.append(item)
+        t["items"]=kept
+        return removed
     kept=[]; removed=[]
     for item in rows:
         probe=copy.deepcopy(t); probe["items"]=kept+[item]
@@ -216,7 +264,7 @@ def repair_budget(t, version="v2"):
     return removed
 
 def fingerprint(t):
-    payload={"revision":t["revision"],"items":t["items"],"budget":t["budget_minor"]}
+    payload={"revision":t["revision"],"items":t["items"],"budget":t.get("budget_minor"),"budget_groups":t.get("budget_groups",[])}
     return hashlib.sha256(json.dumps(payload,sort_keys=True).encode()).hexdigest()
 
 def public_task(t):

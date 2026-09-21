@@ -22,6 +22,13 @@ class DomainTests(unittest.TestCase):
         t=task();t["budget_minor"]=100
         with self.assertRaises(core.AppError):core.set_plan(t,[line()])
         self.assertEqual(t["items"],[])
+    def test_group_budget_is_enforced_even_when_total_budget_passes(self):
+        t=task();t["budget_minor"]=29000;t["budget_groups"]=core.normalize_budget_groups([
+            {"label":"Keyboard","categories":["键盘"],"budget_minor":20000},
+            {"label":"Lighting","categories":["台灯"],"budget_minor":9000}])
+        with self.assertRaises(core.AppError) as raised:core.set_plan(t,[line(),line("test-lamp1-o")])
+        self.assertEqual(raised.exception.details["exceeded_groups"],["Lighting"])
+        self.assertEqual(t["items"],[])
     def test_duplicate_identity(self):
         with self.assertRaises(core.AppError):core.make_items(task(),[line(),line()])
     def test_owned_dedup(self):
